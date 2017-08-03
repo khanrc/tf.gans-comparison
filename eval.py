@@ -9,13 +9,6 @@ import os, glob
 import scipy.misc
 slim = tf.contrib.slim
 
-'''
-eval 이 좀 애매하다.
-방법1) 전체를 다 로드해서 그냥 z를 흘려보내는 방식.
-쓸데없이 X를 읽어오긴 하겠지만 되긴 할 듯?
-방법2) generator 만 로드하는 방식.
-어떻게 하지? => Saver 선언할 때 var_list 를 줄 수 있음. 그걸로 해보자.
-'''
 
 def sample_z(shape):
     return np.random.normal(size=shape)
@@ -39,15 +32,13 @@ def eval(dir_name='eval'):
             restorer.restore(sess, v)
             global_step = int(v.split('/')[-1].split('-')[-1])
             
-            fake_samples = sess.run(model.fake_sample, {model.z: z_})
-            
+            fake_samples = sess.run(model.fake_sample, {model.z: z_})            
 
             # inverse transform: [-1, 1] => [0, 1]
             fake_samples = (fake_samples + 1.) / 2.
             merged_samples = merge(fake_samples, size=[4,4])
             fn = "{:0>5d}.png".format(global_step)
             scipy.misc.imsave(os.path.join(dir_name, fn), merged_samples)
-
 
 
 '''

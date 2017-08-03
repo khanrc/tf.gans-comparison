@@ -32,39 +32,36 @@ def lrelu(inputs, leak=0.2, scope="lrelu"):
 
 
 class DCGAN(object):
-    def __init__(self, training, batch_size, num_threads, num_epochs):
-        # check: DCGAN has BN-params?
+    def __init__(self, X, training, z_dim=100, name='dcgan'):
+        self.name = name
+        # check: DCGAN specified BN-params?
         self.bn_params = {
             "decay": 0.99,
             "epsilon": 1e-5,
             "scale": True,
             "is_training": training
         }
-        self.z_dim = 100
+        self.z_dim = z_dim
         if training == True:
-            self.batch_size = batch_size
-            self.tfrecords_list = glob.glob('./data/celebA_tfrecords/*.tfrecord')
-            X = ip.shuffle_batch_join(self.tfrecords_list, batch_size=self.batch_size, num_threads=num_threads, num_epochs=num_epochs)
             self._build_net(X)
         else:
             self._build_eval_graph()
 
 
     def _build_eval_graph(self):
-        with tf.variable_scope('dcgan'):
+        '''build computational graph for evaluation (generation)
+        '''
+        with tf.variable_scope(self.name):
             self.z = tf.placeholder(tf.float32, [None, self.z_dim])
             self.fake_sample = self._generator(self.z)
 
 
     def _build_net(self, X, lr=0.0002, beta1=0.5):
-        with tf.variable_scope("dcgan"):
-            # X = input_pipeline() - DCGAN 밖에 있는게 맞을듯
-            # z 는 latent space walking 같은거 해보려면 placeholder 로 받는게 맞음 => 이건 evaluation 때 graph structure 를 바꾸면 될 일인것 같음
-            # z = tf.placeholder(tf.float32, [None, self.z_dim]) 
-
-            # batch_size = tf.shape(self.X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
-            # z = tf.random_normal([batch_size, self.z_dim]) # tensor, constant 조합이라도 상관없이 잘 된다. 
-            z = tf.random_normal([self.batch_size, self.z_dim]) # 하지만 그냥 batch_size 를 받으니까 이걸 쓰자.
+        '''build computational graph for training
+        '''
+        with tf.variable_scope(self.name):
+            batch_size = tf.shape(self.X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
+            z = tf.random_normal([batch_size, self.z_dim]) # tensor, constant 조합이라도 상관없이 잘 된다. 
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
             G = self._generator(z)
@@ -76,11 +73,11 @@ class DCGAN(object):
             D_loss_fake = tf.losses.sigmoid_cross_entropy(tf.zeros_like(D_fake_logits), logits=D_fake_logits)
             D_loss = D_loss_real + D_loss_fake
 
-            D_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='dcgan/D/')
-            G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='dcgan/G/')
+            D_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/D/')
+            G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/G/')
 
-            D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='dcgan/D/')
-            G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope='dcgan/G/')
+            D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/D/')
+            G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
                 D_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1).minimize(D_loss, var_list=D_vars)
@@ -130,6 +127,7 @@ class DCGAN(object):
             prob = tf.sigmoid(logits)
 
             return prob, logits
+
 
     def _generator(self, z, reuse=False):
         with tf.variable_scope('G', reuse=reuse):

@@ -80,7 +80,7 @@ def show_all_variables():
 def merge(images, size):
     """merge images.
 
-    checklist before imsave:
+    checklist before/after imsave:
     * are images post-processed? for example - denormalization
     * is np.squeeze required? maybe for grayscale...
     """

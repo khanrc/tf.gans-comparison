@@ -13,8 +13,8 @@ def _bytes_features(value):
 def _int64_features(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
 
+
 # preproc for celebA
-# burrowed from https://github.com/nmhkahn/DCGAN-tensorflow-slim/blob/master/dataset/download_and_convert.py
 def center_crop(im, output_height, output_width):
     h, w = im.shape[:2]
     if h < output_height and w < output_width:
@@ -43,6 +43,8 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 		print path
 		path_list.extend(glob.glob(path))
 
+	# shuffle path_list ? 
+	# 굳이 해줄 필요가 없긴 한데 해주면 더 좋을것같기도 하고...
 	num_files = len(path_list)
 	num_per_shard = num_files // num_shards # 마지막 샤드는 더 많음
 
