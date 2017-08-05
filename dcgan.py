@@ -2,8 +2,6 @@
 import tensorflow as tf
 slim = tf.contrib.slim
 from utils import *
-import inputpipe as ip
-import glob
 
 '''
 일단 MNIST 는 무시하자... 귀찮다.
@@ -43,24 +41,24 @@ class DCGAN(object):
         }
         self.z_dim = z_dim
         if training == True:
-            self._build_net(X)
+            self._build_train_graph(X)
         else:
-            self._build_eval_graph()
+            self._build_gen_graph()
 
 
-    def _build_eval_graph(self):
-        '''build computational graph for evaluation (generation)
+    def _build_gen_graph(self):
+        '''build computational graph for generation (evaluation)
         '''
         with tf.variable_scope(self.name):
             self.z = tf.placeholder(tf.float32, [None, self.z_dim])
             self.fake_sample = self._generator(self.z)
 
 
-    def _build_net(self, X, lr=0.0002, beta1=0.5):
+    def _build_train_graph(self, X):
         '''build computational graph for training
         '''
         with tf.variable_scope(self.name):
-            batch_size = tf.shape(self.X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
+            batch_size = tf.shape(X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
             z = tf.random_normal([batch_size, self.z_dim]) # tensor, constant 조합이라도 상관없이 잘 된다. 
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
@@ -80,9 +78,10 @@ class DCGAN(object):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                # learning rate 0.001 => InfoGAN style
+                G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
                 # minimize 에서 자동으로 global_step 을 업데이트해줌
 
             # summaries

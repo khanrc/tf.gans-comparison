@@ -10,28 +10,43 @@ from tqdm import tqdm
 import numpy as np
 import inputpipe as ip
 import glob, os
+from argparse import ArgumentParser
+import utils
 
 
 # hyperparams
-num_epochs = 20
-batch_size = 128
-num_threads = 4
+# num_epochs = 20
+# batch_size = 128
+# num_threads = 4
+
+def build_parser():
+    parser = ArgumentParser()
+    parser.add_argument('--num_epochs', default=20, help='default: 20')
+    parser.add_argument('--batch_size', default=128, help='default: 128')
+    parser.add_argument('--num_threads', default=4, help='# of data read threads (default: 4)')
+    models_str = ' / '.join(utils.model_zoo)
+    parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
+
+    return parser
 
 
 def input_pipeline(glob_pattern, batch_size, num_threads, num_epochs):
     tfrecords_list = glob.glob(glob_pattern)
+    num_examples = utils.num_examples_from_tfrecords(tfrecords_list)
     X = ip.shuffle_batch_join(tfrecords_list, batch_size=batch_size, num_threads=num_threads, num_epochs=num_epochs)
-    return X
+    return X, num_examples
 
 
-def train():
-    X = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=batch_size, num_threads=num_threads, num_epochs=num_epochs)
-    model = DCGAN(X, training=True)
-    n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
+def train(num_epochs, batch_size, n_examples):
+    # n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
     # 1 epoch = 1583 steps
+    print("\n# of examples: {}".format(n_examples))
+    print("steps per epoch: {}\n".format(n_examples//batch_size))
 
     summary_path = os.path.join('./summary/', model.name)
     ckpt_path = os.path.join('./checkpoints', model.name)
+    if not os.path.exists(ckpt_path):
+        tf.gfile.MakeDirs(ckpt_path)
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -40,18 +55,18 @@ def train():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        summary_writer = tf.summary.FileWriter(summary_path, flush_secs=30)
+        summary_writer = tf.summary.FileWriter(summary_path, flush_secs=30, graph=sess.graph)
         total_steps = int(np.ceil(n_examples * num_epochs / float(batch_size))) # total global step
         pbar = tqdm(total=total_steps, desc='global_step')
 
         saver = tf.train.Saver(max_to_keep=100)
         global_step = 0
 
-        if tf.gfile.Exists(ckpt_path):
-            ckpt = tf.train.get_checkpoint_state(ckpt_path)
+        ckpt = tf.train.get_checkpoint_state(ckpt_path)
+        if ckpt:
             saver.restore(sess, ckpt.model_checkpoint_path)
             global_step = sess.run(model.global_step)
-            print('Restore from {} ... starting global step is {}'.format(ckpt.model_checkpoint_path, global_step))
+            print('\nRestore from {} ... starting global step is {}\n'.format(ckpt.model_checkpoint_path, global_step))
             pbar.update(global_step)
             # 이게 안되면 ckpt.model_checkpoint_path.split('-')[-1] 로 가져와도 됨... 근데뭔가 이렇게 그래프에 박아서 저장한 경우에는 여기서 가져와야 할 것 같다.
             # 그러지 않으면 이렇게 저장한 의미가 없잖아?
@@ -70,10 +85,10 @@ def train():
                     pbar.update(10)
 
                     if global_step % 1000 == 0:
-                        saver.save(sess, ckpt_path+'/dcgan', global_step=global_step)
+                        saver.save(sess, ckpt_path+'/'+model.name, global_step=global_step)
 
         except tf.errors.OutOfRangeError:
-            print('Done -- epoch limit reached')
+            print('\nDone -- epoch limit reached\n')
         finally:
             coord.request_stop()
 
@@ -81,5 +96,15 @@ def train():
         summary_writer.close()
         pbar.close()
 
+
 if __name__ == "__main__":
-    train()
+    parser = build_parser()
+    FLAGS = parser.parse_args()
+    FLAGS.model = FLAGS.model.upper()
+    utils.pprint(FLAGS)
+
+    # input pipeline
+    X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
+    model = utils.get_model(FLAGS.model, training=True, X=X)
+
+    train(num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples)

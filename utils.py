@@ -1,7 +1,7 @@
 # coding: utf-8
 # check python `logging` module
 import tensorflow as tf
-import warnings
+# import warnings
 
 '''https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
 Matplotlib chooses Xwindows backend by default. You need to set matplotlib do not use Xwindows backend.
@@ -15,16 +15,17 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import scipy.misc
 import numpy as np
+import dcgan
 
 
-warnings.simplefilter('error')
+# warnings.simplefilter('error')
 
 
 # 전체를 다 iterate 하면서 숫자를 셈
 # 총 20만개 examples (128개 tfrecord files) iterate 하는데 1.5초 정도 걸림
 def num_examples_from_tfrecords(tfrecords_list):
     num_examples = 0 
-    for path in tfrecordslist:
+    for path in tfrecords_list:
         num_examples += sum(1 for _ in tf.python_io.tf_record_iterator(path))
     return num_examples
 
@@ -42,8 +43,10 @@ def expected_shape(tensor, expected):
     else:
         shape = tensor[1:]
     shape = map(lambda x: x.value, shape)
-    if not shape == expected:
-        warnings.warn('wrong shape {} (expected shape is {})'.format(shape, expected))
+    err_msg = 'wrong shape {} (expected shape is {})'.format(shape, expected)
+    assert shape == expected, err_msg
+    # if not shape == expected:
+    #     warnings.warn('wrong shape {} (expected shape is {})'.format(shape, expected))
 
 
 def plot(samples, shape=(4,4), figratio=0.75):
@@ -103,3 +106,37 @@ def merge(images, size):
     else:
         raise ValueError('in merge(images,size) images parameter must have dimensions: HxW or HxWx3 or HxWx4')
 
+
+#################################################
+############### Commons for GANs ################
+#################################################
+
+# utils 에 넣기 좀 애매한데 그렇다고 파일 하나 새로 만들기도 좀 그래서 그냥 여따 다 박아넣음
+
+model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'BEGAN']
+
+def get_model(name, training, X=None):
+    model = None
+    if name == 'DCGAN':
+        model = dcgan.DCGAN(X=X, training=training)
+    elif name == 'LSGAN':
+        pass
+    elif name == 'WGAN':
+        pass
+    elif name == 'WGAN-GP':
+        pass
+    elif name == 'BEGAN':
+        pass
+    else:
+        assert False, name + ' is not in the model zoo'
+
+    assert model, name + ' is work in progress'
+
+    return model
+
+
+def pprint_args(FLAGS):
+    print("\nParameters:")
+    for attr, value in sorted(vars(FLAGS).items()):
+        print("{}={}".format(attr.upper(), value))
+    print("")

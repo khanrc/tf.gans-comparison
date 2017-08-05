@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import tensorflow as tf
+import numpy as np
 import scipy.misc
 import os
 import glob
@@ -28,6 +29,9 @@ def center_crop(im, output_height, output_width):
 def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_prefix=''):
 	if not tf.gfile.Exists(source_dir):
 		return
+	
+	if tfrecords_prefix and not tfrecords_prefix.endswith('-'):
+		tfrecords_prefix += '-'
 
 	if tf.gfile.Exists(target_dir):
 		# print("{} is Already exists".format(target_dir))
@@ -44,7 +48,7 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 		path_list.extend(glob.glob(path))
 
 	# shuffle path_list ? 
-	# 굳이 해줄 필요가 없긴 한데 해주면 더 좋을것같기도 하고...
+	np.random.shuffle(path_list)
 	num_files = len(path_list)
 	num_per_shard = num_files // num_shards # 마지막 샤드는 더 많음
 
@@ -55,7 +59,7 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 	# convert to tfrecords
 	i = 0
 	for shard_idx in range(num_shards):
-		tfrecord_fn = '{}{:0>4d}-of-{:0>4d}.tfrecords'.format(tfrecords_prefix, shard_idx+1, num_shards)
+		tfrecord_fn = '{}{:0>4d}-of-{:0>4d}.tfrecord'.format(tfrecords_prefix, shard_idx+1, num_shards)
 		tfrecord_path = os.path.join(target_dir, tfrecord_fn)
 		print("Writing {} ...".format(tfrecord_path))
 		with tf.python_io.TFRecordWriter(tfrecord_path) as writer:
@@ -92,5 +96,5 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 			break
 
 if __name__ == "__main__":
-	convert('./data/celebA', './data/celebA_tfrecords', exts=['jpg'], num_shards=128)
+	convert('../DCGAN/data/celebA', './data/celebA_tfrecords', exts=['jpg'], num_shards=128, tfrecords_prefix='celebA')
 

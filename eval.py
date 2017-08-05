@@ -1,33 +1,60 @@
 #coding: utf-8
-import matplotlib
-
 import tensorflow as tf
 from dcgan import DCGAN
 import numpy as np
-from utils import *
+import utils
 import os, glob
 import scipy.misc
+from argparse import ArgumentParser
 slim = tf.contrib.slim
+
+
+def build_parser():
+    parser = ArgumentParser()
+    parser.add_argument('--model', help='DCGAN / LSGAN / WGAN / WGAN-GP / BEGAN', required=True) # DRAGAN, CramerGAN
+
+    return parser
 
 
 def sample_z(shape):
     return np.random.normal(size=shape)
 
 
-def eval(dir_name='eval'):
+def get_all_checkpoints(ckpt_dir, force=False):
+    '''
+    학습이 끊어졌다 재개되면 get_checkpoint_state 로는 모든 체크포인트를 가져올 수 없다 (재개된 시점부터 다시 기록됨)
+    이걸 강제로 다 가져오는 함수 (when force=True)
+    '''
+
+    if force:
+        ckpts = os.listdir(ckpt_dir) # get all fns
+        ckpts = map(lambda p: os.path.splitext(p)[0], ckpts) # del ext => 중복 fn 생성됨
+        ckpts = set(ckpts) # unique
+        ckpts = filter(lambda x: x.split('-')[-1].isdigit(), ckpts) # ckpt 가 아닌것들 필터링
+        ckpts = sorted(ckpts, key=lambda x: int(x.split('-')[-1])) # 정렬
+        ckpts = map(lambda x: os.path.join(ckpt_dir, x), ckpts) # fn => path
+    else:
+        ckpts = tf.train.get_checkpoint_state(ckpt_dir).all_model_checkpoint_paths
+    
+    return ckpts
+
+
+def eval(model, sample_shape=[4,4], load_all_ckpt=True):
+    dir_name = 'eval_' + model.name
     if tf.gfile.Exists(dir_name):
         tf.gfile.DeleteRecursively(dir_name)
     tf.gfile.MkDir(dir_name)
 
     # training=False => generator 만 생성
-    model = DCGAN(training=False, batch_size=None, num_threads=None, num_epochs=None)
     restorer = tf.train.Saver(slim.get_model_variables())
     with tf.Session() as sess:
-        ckpt = tf.train.get_checkpoint_state('./checkpoints/')
+        # ckpt = tf.train.get_checkpoint_state('./checkpoints/' + model.name)
+        ckpts = get_all_checkpoints('./checkpoints/' + model.name, force=load_all_ckpt)
+        size = sample_shape[0] * sample_shape[1]
 
-        z_ = sample_z([16, model.z_dim])
+        z_ = sample_z([size, model.z_dim])
 
-        for v in ckpt.all_model_checkpoint_paths:
+        for v in ckpts:
             print("Evaluating {} ...".format(v))
             restorer.restore(sess, v)
             global_step = int(v.split('/')[-1].split('-')[-1])
@@ -36,7 +63,7 @@ def eval(dir_name='eval'):
 
             # inverse transform: [-1, 1] => [0, 1]
             fake_samples = (fake_samples + 1.) / 2.
-            merged_samples = merge(fake_samples, size=[4,4])
+            merged_samples = utils.merge(fake_samples, size=sample_shape)
             fn = "{:0>5d}.png".format(global_step)
             scipy.misc.imsave(os.path.join(dir_name, fn), merged_samples)
 
@@ -44,6 +71,8 @@ def eval(dir_name='eval'):
 '''
 하지만 이렇게 말고도 그냥 imagemagick 을 통해 할 수 있다:
 $ convert -delay 20 eval/* movie.gif
+
+아래처럼 할꺼면 shading 효과를 넣어주면 좋을 듯 (convert 로는 하기 힘듦)
 '''
 def to_gif(dir_name='eval'):
     images = []
@@ -56,5 +85,10 @@ def to_gif(dir_name='eval'):
 
 
 if __name__ == "__main__":
-    eval()
-    # to_gif()
+    parser = build_parser()
+    FLAGS = parser.parse_args()
+    FLAGS.model = FLAGS.model.upper()
+    utils.pprint_args(FLAGS)
+
+    model = utils.get_model(FLAGS.model, training=False, X=None)
+    eval(model, sample_shape=[4,4], load_all_ckpt=True)
