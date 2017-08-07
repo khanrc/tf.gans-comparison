@@ -115,10 +115,10 @@ def merge(images, size):
 
 model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'BEGAN']
 
-def get_model(name, training, X=None):
+def get_model(name, input_pipe):
     model = None
     if name == 'DCGAN':
-        model = dcgan.DCGAN(X=X, training=training)
+        model = dcgan.DCGAN
     elif name == 'LSGAN':
         pass
     elif name == 'WGAN':
@@ -132,7 +132,7 @@ def get_model(name, training, X=None):
 
     assert model, name + ' is work in progress'
 
-    return model
+    return model(input_pipe=input_pipe)
 
 
 def pprint_args(FLAGS):

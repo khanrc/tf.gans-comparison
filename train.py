@@ -105,6 +105,6 @@ if __name__ == "__main__":
 
     # input pipeline
     X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
-    model = utils.get_model(FLAGS.model, training=True, X=X)
+    model = utils.get_model(FLAGS.model, input_pipe=X)
 
     train(num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples)

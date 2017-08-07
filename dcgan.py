@@ -30,8 +30,13 @@ def lrelu(inputs, leak=0.2, scope="lrelu"):
 
 
 class DCGAN(object):
-    def __init__(self, X, training, z_dim=100, name='dcgan'):
+    def __init__(self, input_pipe, z_dim=100, name='dcgan'):
+        '''
+        training mode: input_pipe = input pipeline
+        generation mode: input_pipe = None
+        '''
         self.name = name
+        training = bool(input_pipe)
         # check: DCGAN specified BN-params?
         self.bn_params = {
             "decay": 0.99,
@@ -41,7 +46,7 @@ class DCGAN(object):
         }
         self.z_dim = z_dim
         if training == True:
-            self._build_train_graph(X)
+            self._build_train_graph(input_pipe)
         else:
             self._build_gen_graph()
 
