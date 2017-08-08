@@ -1,7 +1,9 @@
 # coding: utf-8
 import tensorflow as tf
 slim = tf.contrib.slim
-from utils import *
+from utils import expected_shape
+import ops
+from basemodel import BaseModel
 
 '''
 일단 MNIST 는 무시하자... 귀찮다.
@@ -19,44 +21,13 @@ batch size 128
 init - normal dist + stddev 0.02
 '''
 
-def lrelu(inputs, leak=0.2, scope="lrelu"):
-    """
-    https://github.com/tensorflow/tensorflow/issues/4079
-    """
-    with tf.variable_scope(scope):
-        f1 = 0.5 * (1 + leak)
-        f2 = 0.5 * (1 - leak)
-        return f1 * inputs + f2 * abs(inputs)
-
-
-class DCGAN(object):
-    def __init__(self, input_pipe, z_dim=100, name='dcgan'):
+class DCGAN(BaseModel):
+    def __init__(self, input_pipe, z_dim=100, name='dcgan2'):
         '''
         training mode: input_pipe = input pipeline
         generation mode: input_pipe = None
         '''
-        self.name = name
-        training = bool(input_pipe)
-        # check: DCGAN specified BN-params?
-        self.bn_params = {
-            "decay": 0.99,
-            "epsilon": 1e-5,
-            "scale": True,
-            "is_training": training
-        }
-        self.z_dim = z_dim
-        if training == True:
-            self._build_train_graph(input_pipe)
-        else:
-            self._build_gen_graph()
-
-
-    def _build_gen_graph(self):
-        '''build computational graph for generation (evaluation)
-        '''
-        with tf.variable_scope(self.name):
-            self.z = tf.placeholder(tf.float32, [None, self.z_dim])
-            self.fake_sample = self._generator(self.z)
+        super(DCGAN, self).__init__(input_pipe=input_pipe, z_dim=z_dim, name=name)
 
 
     def _build_train_graph(self, X):
@@ -115,7 +86,7 @@ class DCGAN(object):
         with tf.variable_scope('D', reuse=reuse):
             net = X
             
-            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=lrelu, 
+            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu, 
                 normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
                 net = slim.conv2d(net, 64, normalizer_fn=None)
                 expected_shape(net, [32, 32, 64])
@@ -141,13 +112,13 @@ class DCGAN(object):
 
             with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=tf.nn.relu, 
                 normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
-                net = slim.conv2d_transpose(net, 512, normalizer_fn=None)
+                net = slim.conv2d_transpose(net, 512)
                 expected_shape(net, [8, 8, 512])
                 net = slim.conv2d_transpose(net, 256)
                 expected_shape(net, [16, 16, 256])
                 net = slim.conv2d_transpose(net, 128)
                 expected_shape(net, [32, 32, 128])
-                net = slim.conv2d_transpose(net, 3, activation_fn=tf.nn.tanh)
+                net = slim.conv2d_transpose(net, 3, activation_fn=tf.nn.tanh, normalizer_fn=None)
                 expected_shape(net, [64, 64, 3])
 
                 return net

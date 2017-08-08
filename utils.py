@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import scipy.misc
 import numpy as np
-import dcgan
 
 
 # warnings.simplefilter('error')
@@ -105,38 +104,3 @@ def merge(images, size):
         return img
     else:
         raise ValueError('in merge(images,size) images parameter must have dimensions: HxW or HxWx3 or HxWx4')
-
-
-#################################################
-############### Commons for GANs ################
-#################################################
-
-# utils 에 넣기 좀 애매한데 그렇다고 파일 하나 새로 만들기도 좀 그래서 그냥 여따 다 박아넣음
-
-model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'BEGAN']
-
-def get_model(name, input_pipe):
-    model = None
-    if name == 'DCGAN':
-        model = dcgan.DCGAN
-    elif name == 'LSGAN':
-        pass
-    elif name == 'WGAN':
-        pass
-    elif name == 'WGAN-GP':
-        pass
-    elif name == 'BEGAN':
-        pass
-    else:
-        assert False, name + ' is not in the model zoo'
-
-    assert model, name + ' is work in progress'
-
-    return model(input_pipe=input_pipe)
-
-
-def pprint_args(FLAGS):
-    print("\nParameters:")
-    for attr, value in sorted(vars(FLAGS).items()):
-        print("{}={}".format(attr.upper(), value))
-    print("")

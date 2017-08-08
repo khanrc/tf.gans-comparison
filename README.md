@@ -6,10 +6,15 @@
 * MNIST 에 대해서는 해 봤지만 사실 MNIST 는 데이터셋이 간단해서 구별이 잘 안 감
 * 따라서 CelebA 나 LSUN 등 좀 복잡한 데이터셋에 대해서 해 보면서 몇몇 코드들 리팩토링도 하고...
 
+## Checks
+
+* Data read 가 좀 이상함. 20 epoch 을 주면 10 epoch 만 돌고 끝남. epoch 계산을 내가 잘못하고 있나? 체크해보자.
+* LSGAN hyperparams
+
 ## GANs
 
-* [ ] DCGAN
-* [ ] LSGAN
+* [x] DCGAN
+* [ ] LSGAN - WIP
 * [ ] EBGAN
 * [ ] WGAN
 * [ ] WGAN-GP

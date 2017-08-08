@@ -3,6 +3,7 @@ import tensorflow as tf
 from dcgan import DCGAN
 import numpy as np
 import utils
+from config import get_model, pprint_args
 import os, glob
 import scipy.misc
 from argparse import ArgumentParser
@@ -12,6 +13,7 @@ slim = tf.contrib.slim
 def build_parser():
     parser = ArgumentParser()
     parser.add_argument('--model', help='DCGAN / LSGAN / WGAN / WGAN-GP / BEGAN', required=True) # DRAGAN, CramerGAN
+    parser.add_argument('--name', help='default: model')
 
     return parser
 
@@ -39,8 +41,10 @@ def get_all_checkpoints(ckpt_dir, force=False):
     return ckpts
 
 
-def eval(model, sample_shape=[4,4], load_all_ckpt=True):
-    dir_name = 'eval_' + model.name
+def eval(model, name, sample_shape=[4,4], load_all_ckpt=True):
+    if name == None:
+        name = model.name
+    dir_name = 'eval_' + name
     if tf.gfile.Exists(dir_name):
         tf.gfile.DeleteRecursively(dir_name)
     tf.gfile.MkDir(dir_name)
@@ -48,8 +52,8 @@ def eval(model, sample_shape=[4,4], load_all_ckpt=True):
     # training=False => generator 만 생성
     restorer = tf.train.Saver(slim.get_model_variables())
     with tf.Session() as sess:
-        # ckpt = tf.train.get_checkpoint_state('./checkpoints/' + model.name)
-        ckpts = get_all_checkpoints('./checkpoints/' + model.name, force=load_all_ckpt)
+        # ckpt = tf.train.get_checkpoint_state('./checkpoints/' + name)
+        ckpts = get_all_checkpoints('./checkpoints/' + name, force=load_all_ckpt)
         size = sample_shape[0] * sample_shape[1]
 
         z_ = sample_z([size, model.z_dim])
@@ -88,7 +92,7 @@ if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
     FLAGS.model = FLAGS.model.upper()
-    utils.pprint_args(FLAGS)
+    pprint_args(FLAGS)
 
-    model = utils.get_model(FLAGS.model, training=False, X=None)
-    eval(model, sample_shape=[4,4], load_all_ckpt=True)
+    model = get_model(FLAGS.model, FLAGS.name, input_pipe=None)
+    eval(model, name=FLAGS.name, sample_shape=[4,4], load_all_ckpt=True)
