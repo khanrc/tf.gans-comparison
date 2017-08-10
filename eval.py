@@ -1,6 +1,5 @@
 #coding: utf-8
 import tensorflow as tf
-from dcgan import DCGAN
 import numpy as np
 import utils
 import config
@@ -94,7 +93,7 @@ if __name__ == "__main__":
     FLAGS.model = FLAGS.model.upper()
     if FLAGS.name is None:
         FLAGS.name = FLAGS.model.lower()
-    pprint_args(FLAGS)
+    config.pprint_args(FLAGS)
 
-    model = get_model(FLAGS.model, FLAGS.name, input_pipe=None)
+    model = config.get_model(FLAGS.model, FLAGS.name, input_pipe=None)
     eval(model, name=FLAGS.name, sample_shape=[4,4], load_all_ckpt=True)

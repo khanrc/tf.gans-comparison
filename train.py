@@ -5,7 +5,6 @@ histogram 이나 image 는 heavy-summary 라서 가끔 하고 싶은데, 코드�
 '''
 
 import tensorflow as tf
-from dcgan import DCGAN
 from tqdm import tqdm
 import numpy as np
 import inputpipe as ip
