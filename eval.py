@@ -13,7 +13,7 @@ slim = tf.contrib.slim
 def build_parser():
     parser = ArgumentParser()
     parser.add_argument('--model', help='DCGAN / LSGAN / WGAN / WGAN-GP / BEGAN', required=True) # DRAGAN, CramerGAN
-    parser.add_argument('--name', help='default: model')
+    parser.add_argument('--name', help='default: name=model')
 
     return parser
 
@@ -91,6 +91,8 @@ def to_gif(dir_name='eval'):
 if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
+    if FLAGS.name is None:
+        FLAGS.name = FLAGS.model.lower()
     FLAGS.model = FLAGS.model.upper()
     pprint_args(FLAGS)
 

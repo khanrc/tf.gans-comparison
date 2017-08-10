@@ -72,7 +72,7 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 				except ValueError, e:
 					print("[Exception] {}".format(e))
 					continue
-				im = scipy.misc.imresize(im, [64, 64])
+				im = scipy.misc.imresize(im, [112, 112])
 
 				example = tf.train.Example(features=tf.train.Features(feature={
 					"shape": _int64_features(im.shape),
@@ -96,5 +96,5 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 			break
 
 if __name__ == "__main__":
-	convert('../DCGAN/data/celebA', './data/celebA_tfrecords', exts=['jpg'], num_shards=128, tfrecords_prefix='celebA')
+	convert('../DCGAN/data/celebA', './data/celebA_112_tfrecords', exts=['jpg'], num_shards=128, tfrecords_prefix='celebA')
 

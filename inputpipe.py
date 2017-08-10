@@ -2,6 +2,8 @@
 import tensorflow as tf
 
 
+image_shape = [64, 64, 3]
+
 def read_parse_preproc(filename_queue):
     with tf.variable_scope('read_parse_preproc'):
         reader = tf.TFRecordReader()
@@ -17,10 +19,16 @@ def read_parse_preproc(filename_queue):
         )
 
         image = tf.decode_raw(features["image"], tf.uint8)
-        shape = tf.cast(features["shape"], tf.int32)
+        shape = tf.cast(features["shape"], tf.int32) 
 
         # preproc
-        image = tf.reshape(image, [64, 64, 3])
+        # default image size 를 쓸 수 있는 방법이 따로 있는지 잘 모르겠음. sess.run 해서 구해오면 되긴 합니다만 -.-
+        # 여따가 넣어놓은 shape 은 언제 쓰나...?
+
+        # if image_shape:
+        image = tf.reshape(image, image_shape)
+        # else:
+        #     image = tf.reshape(image, shape) # image_shape 가 따로 정해져 있지 않으면 default shape 으로 지정 => 이것도 안 되네;
         image = tf.cast(image, tf.float32)
         image = image / 127.5 - 1.0
         

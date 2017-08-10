@@ -11,7 +11,7 @@ import numpy as np
 import inputpipe as ip
 import glob, os
 from argparse import ArgumentParser
-import utils, ops
+import utils, config
 
 
 # hyperparams
@@ -21,12 +21,13 @@ import utils, ops
 
 def build_parser():
     parser = ArgumentParser()
-    parser.add_argument('--num_epochs', default=20, help='default: 20')
-    parser.add_argument('--batch_size', default=128, help='default: 128')
-    parser.add_argument('--num_threads', default=4, help='# of data read threads (default: 4)')
-    models_str = ' / '.join(ops.model_zoo)
+    parser.add_argument('--num_epochs', default=20, help='default: 20', type=int)
+    parser.add_argument('--batch_size', default=128, help='default: 128', type=int)
+    parser.add_argument('--num_threads', default=4, help='# of data read threads (default: 4)', type=int)
+    models_str = ' / '.join(config.model_zoo)
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
-    parser.add_argument('--name', help='default: model')
+    parser.add_argument('--name', help='default: name=model')
+    # more arguments: dataset
 
     return parser
 
@@ -51,7 +52,7 @@ def train(num_epochs, batch_size, n_examples):
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer()) # for epochs
+        sess.run(tf.local_variables_initializer()) # for epochs 
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
@@ -102,10 +103,12 @@ if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
     FLAGS.model = FLAGS.model.upper()
-    ops.pprint_args(FLAGS)
+    config.pprint_args(FLAGS)
+    if FLAGS.name is None:
+        FLAGS.name = FLAGS.model.lower()
 
     # input pipeline
     X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
-    model = ops.get_model(FLAGS.model, FLAGS.name, input_pipe=X)
+    model = config.get_model(FLAGS.model, FLAGS.name, input_pipe=X)
 
     train(num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples)

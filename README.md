@@ -6,15 +6,16 @@
 * MNIST 에 대해서는 해 봤지만 사실 MNIST 는 데이터셋이 간단해서 구별이 잘 안 감
 * 따라서 CelebA 나 LSUN 등 좀 복잡한 데이터셋에 대해서 해 보면서 몇몇 코드들 리팩토링도 하고...
 
-## Checks
+## ToDo
 
-* Data read 가 좀 이상함. 20 epoch 을 주면 10 epoch 만 돌고 끝남. epoch 계산을 내가 잘못하고 있나? 체크해보자.
-* LSGAN hyperparams
+* [ ] GAN 은 sess.run 을 두 번 해줘야 하므로 Input pipeline 을 떼어내서 명시적으로 input 을 fetch 해주고 다시 feed_dict 로 넣어줘야 함
+* [ ] config.py, utils.py, ops.py 쓸데없이 많은 것 같다. 이거 정리좀 해줘야 할 듯 - refactoring
+* [ ] inputpipe 에서도 shape 지정하는 부분 잘 구조화해야함
 
 ## GANs
 
 * [x] DCGAN
-* [ ] LSGAN - WIP
+* [x] LSGAN
 * [ ] EBGAN
 * [ ] WGAN
 * [ ] WGAN-GP
