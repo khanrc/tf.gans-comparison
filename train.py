@@ -14,11 +14,6 @@ from argparse import ArgumentParser
 import utils, config
 
 
-# hyperparams
-# num_epochs = 20
-# batch_size = 128
-# num_threads = 4
-
 def build_parser():
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', default=20, help='default: 20', type=int)
@@ -103,9 +98,9 @@ if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
     FLAGS.model = FLAGS.model.upper()
-    config.pprint_args(FLAGS)
     if FLAGS.name is None:
         FLAGS.name = FLAGS.model.lower()
+    config.pprint_args(FLAGS)
 
     # input pipeline
     X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)

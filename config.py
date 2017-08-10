@@ -1,7 +1,16 @@
 import dcgan, lsgan
 
+'''
+DCGAN, LSGAN, WGAN, WGAN-GP, BEGAN
 
-model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'BEGAN']
+Optional:
+DRAGAN, CramerGAN
+
+More:
+EBGAN, BGAN, MDGAN?
+'''
+
+model_zoo = ['DCGAN', 'LSGAN'] #, 'WGAN', 'WGAN-GP', 'BEGAN']
 
 def get_model(mtype, name, input_pipe):
     model = None
@@ -28,3 +37,4 @@ def pprint_args(FLAGS):
     for attr, value in sorted(vars(FLAGS).items()):
         print("{}={}".format(attr.upper(), value))
     print("")
+

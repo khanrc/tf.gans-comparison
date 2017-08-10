@@ -3,7 +3,7 @@ import tensorflow as tf
 from dcgan import DCGAN
 import numpy as np
 import utils
-from config import get_model, pprint_args
+import config
 import os, glob
 import scipy.misc
 from argparse import ArgumentParser
@@ -12,7 +12,8 @@ slim = tf.contrib.slim
 
 def build_parser():
     parser = ArgumentParser()
-    parser.add_argument('--model', help='DCGAN / LSGAN / WGAN / WGAN-GP / BEGAN', required=True) # DRAGAN, CramerGAN
+    models_str = ' / '.join(config.model_zoo)
+    parser.add_argument('--model', help=models_str, required=True) 
     parser.add_argument('--name', help='default: name=model')
 
     return parser
@@ -24,7 +25,7 @@ def sample_z(shape):
 
 def get_all_checkpoints(ckpt_dir, force=False):
     '''
-    학습이 끊어졌다 재개되면 get_checkpoint_state 로는 모든 체크포인트를 가져올 수 없다 (재개된 시점부터 다시 기록됨)
+    학습이 끊어졌다 재개되면 get_checkpoint_state 로는 모든 체크포인트를 가져올 수 없다 (재개된 시점부터 다시 기록됨).
     이걸 강제로 다 가져오는 함수 (when force=True)
     '''
 
@@ -44,15 +45,14 @@ def get_all_checkpoints(ckpt_dir, force=False):
 def eval(model, name, sample_shape=[4,4], load_all_ckpt=True):
     if name == None:
         name = model.name
-    dir_name = 'eval_' + name
+    dir_name = 'eval/' + name
     if tf.gfile.Exists(dir_name):
         tf.gfile.DeleteRecursively(dir_name)
-    tf.gfile.MkDir(dir_name)
+    tf.gfile.MakeDirs(dir_name)
 
     # training=False => generator 만 생성
     restorer = tf.train.Saver(slim.get_model_variables())
     with tf.Session() as sess:
-        # ckpt = tf.train.get_checkpoint_state('./checkpoints/' + name)
         ckpts = get_all_checkpoints('./checkpoints/' + name, force=load_all_ckpt)
         size = sample_shape[0] * sample_shape[1]
 
@@ -78,22 +78,22 @@ $ convert -delay 20 eval/* movie.gif
 
 아래처럼 할꺼면 shading 효과를 넣어주면 좋을 듯 (convert 로는 하기 힘듦)
 '''
-def to_gif(dir_name='eval'):
-    images = []
-    for path in glob.glob(os.path.join(dir_name, '*.png')):
-        im = scipy.misc.imread(path)
-        images.append(im)
+# def to_gif(dir_name='eval'):
+#     images = []
+#     for path in glob.glob(os.path.join(dir_name, '*.png')):
+#         im = scipy.misc.imread(path)
+#         images.append(im)
 
-    # make_gif(images, dir_name + '/movie.gif', duration=10, true_image=True)
-    imageio.mimsave('movie.gif', images, duration=0.2)
+#     # make_gif(images, dir_name + '/movie.gif', duration=10, true_image=True)
+#     imageio.mimsave('movie.gif', images, duration=0.2)
 
 
 if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
+    FLAGS.model = FLAGS.model.upper()
     if FLAGS.name is None:
         FLAGS.name = FLAGS.model.lower()
-    FLAGS.model = FLAGS.model.upper()
     pprint_args(FLAGS)
 
     model = get_model(FLAGS.model, FLAGS.name, input_pipe=None)
