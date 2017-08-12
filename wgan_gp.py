@@ -11,9 +11,15 @@ based on DCGAN.
 WGAN:
 WD = max_f [ Ex[f(x)] - Ez[f(g(z))] ] where f has K-Lipschitz constraint
 J = min WD (G_loss)
+
++ GP:
+Instead of weight clipping, gradient penalty is proposed.
+real x 와 fake y 간에 선을 그으면, x_t = (1-t)x + ty 가 된다.
+이 x_t 에 대한 Optimal critic D* 의 gradient = (y-x_t) / ||y-x_t|| 라고 함 (appendix 참조).
+이 크기는 1 이므로, 이에 따라 페널티를 준다.
 '''
 
-class WGAN(BaseModel):
+class WGAN_GP(BaseModel):
     def _build_train_graph(self):
         '''build computational graph for training
         '''
@@ -32,6 +38,18 @@ class WGAN(BaseModel):
             C_loss = -W_dist # minimize
             G_loss = tf.reduce_mean(-C_fake) # =W_dist. 근데 C_real 이 G 와 상관없으므로 생략해줌. 넣어도 속도는 똑같긴 하겠지?
 
+            # Gradient Penalty (GP)
+            ld = 10.
+            eps = tf.random_uniform(shape=[batch_size, 1, 1, 1], minval=0., maxval=1.)
+            x_hat = eps*X + (1-eps)*G 
+            C_xhat = self._critic(x_hat, reuse=True)
+            C_xhat_grad = tf.gradients(C_xhat, x_hat)[0] # gradient of D(x_hat)
+            # tf.norm 함수가 좀 이상해서, axis 가 reduce_mean 처럼 작동하긴 하는데 3차원 이상 줄 수 없음. 따라서 아래처럼 flatten 을 활용함
+            C_xhat_grad_norm = tf.norm(slim.flatten(C_xhat_grad), axis=1)  # l2 norm
+            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(C_xhat), axis=[1,2,3])**0.5 - 1.)) # 이것도 맞음
+            GP = ld * tf.reduce_mean(tf.square(C_xhat_grad_norm - 1.))
+            C_loss += GP
+
             C_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/critic/')
             G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/generator/')
 
@@ -41,37 +59,13 @@ class WGAN(BaseModel):
             # 사실 C 는 n_critic 번 학습시켜줘야 하는데 귀찮아서 그냥 러닝레이트로 때려박음 
             # 학습횟수를 건드리려면 train.py 를 수정해야해서...
             n_critic = 5
-            lr = 0.00005
+            lr = 0.0001
+            beta1 = 0.5
+            beta2 = 0.9
             with tf.control_dependencies(C_update_ops):
-                C_train_op = tf.train.RMSPropOptimizer(learning_rate=lr*n_critic).minimize(C_loss, var_list=C_vars)
+                C_train_op = tf.train.AdamOptimizer(learning_rate=lr*n_critic, beta1=beta1, beta2=beta2).minimize(C_loss, var_list=C_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.RMSPropOptimizer(learning_rate=lr).minimize(G_loss, var_list=G_vars, global_step=global_step)
-
-            # weight clipping
-            '''
-            이 때 웨이트 클리핑은 자동으로 실행이 안 되니 control dependency 를 설정해주거나
-            group_op 로 묶어주거나 둘중 하나를 해야 할 듯
-            Q. batch_norm parameter 도 clip 해줘야 하나?
-            베타는 해 주는게 맞는 것 같은데, 감마는 좀 이상한데...? 
-            => 대부분의 구현체들이 감마도 하고 있는 것 같음. 일단 해준다.
-            '''
-            # print 'C_vars: {}'.format(C_vars)
-            # ver 1. 대부분의 구현체
-            C_clips = [tf.assign(var, tf.clip_by_value(var, -0.01, 0.01)) for var in C_vars] # with gamma
-            # ver 2. 이건 안 됨
-            # C_clips = [tf.assign(var, tf.clip_by_value(var, -0.01, 0.01)) for var in C_vars if 'gamma' not in var.op.name] # without gamma
-
-            # ver 3. 이건 되긴 하는데 흠... 잘모르겠음 
-            # C_clips = []
-            # for var in C_vars:
-            #     if 'gamma' not in var.op.name:
-            #         C_clips.append(tf.assign(var, tf.clip_by_value(var, -0.01, 0.01)))
-            #     else:
-            #         C_clips.append(tf.assign(var, tf.clip_by_value(var, -1.00, 1.00)))
-
-            print 'Weight clipping: {}'.format(C_clips)
-            with tf.control_dependencies([C_train_op]): # should be iterable
-            	C_train_op = tf.tuple(C_clips) # tf.group can be better ...
+                G_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1, beta2=beta2).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -79,8 +73,7 @@ class WGAN(BaseModel):
                 tf.summary.scalar('G_loss', G_loss),
                 tf.summary.scalar('C_loss', C_loss),
                 tf.summary.scalar('W_dist', W_dist),
-                # tf.summary.scalar('C_loss/real', C_real), # 무슨 의미가 있는지는 모르겠는데 그냥 궁금해서
-                # tf.summary.scalar('C_loss/fake', C_fake) # 는 vector 라 안되네
+                tf.summary.scalar('GP', GP)
             ])
 
             # sparse-step summary
@@ -99,16 +92,13 @@ class WGAN(BaseModel):
     def _critic(self, X, reuse=False):
     	'''
     	K-Lipschitz function.
-    	확인해봐야겠지만 K-Lipschitz function 을 근사하는 함수고, 
-    	Lipschitz constraint 는 weight clipping 으로 걸어주니 
-    	짐작컨대 그냥 linear 값을 추정하면 될 것 같음.
+    	WGAN-GP 에서는 BN 을 사용하지 않는다.
     	'''
         with tf.variable_scope('critic', reuse=reuse):
             net = X
             
-            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu, 
-                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
-                net = slim.conv2d(net, 64, normalizer_fn=None)
+            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu):
+                net = slim.conv2d(net, 64)
                 expected_shape(net, [32, 32, 64])
                 net = slim.conv2d(net, 128)
                 expected_shape(net, [16, 16, 128])

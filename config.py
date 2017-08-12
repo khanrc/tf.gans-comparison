@@ -1,4 +1,4 @@
-import dcgan, lsgan, wgan
+import dcgan, lsgan, wgan, wgan_gp
 
 '''
 DCGAN, LSGAN, WGAN, WGAN-GP, BEGAN
@@ -21,7 +21,7 @@ def get_model(mtype, name, training):
     elif mtype == 'WGAN':
         model = wgan.WGAN
     elif mtype == 'WGAN-GP':
-        pass
+        model = wgan_gp.WGAN_GP
     elif mtype == 'BEGAN':
         pass
     else:
