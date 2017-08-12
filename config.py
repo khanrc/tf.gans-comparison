@@ -10,7 +10,7 @@ More:
 EBGAN, BGAN, MDGAN?
 '''
 
-model_zoo = ['DCGAN', 'LSGAN', 'WGAN'] # 'WGAN-GP', 'BEGAN']
+model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'BEGAN']
 
 def get_model(mtype, name, training):
     model = None
