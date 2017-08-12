@@ -20,7 +20,7 @@
 
 * [x] DCGAN
 * [x] LSGAN
-* [ ] WGAN
+* [x] WGAN
 * [ ] WGAN-GP
 * [ ] BEGAN
 * Additional
