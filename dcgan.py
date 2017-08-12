@@ -22,18 +22,11 @@ init - normal dist + stddev 0.02
 '''
 
 class DCGAN(BaseModel):
-    def __init__(self, input_pipe, z_dim=100, name='dcgan2'):
-        '''
-        training mode: input_pipe = input pipeline
-        generation mode: input_pipe = None
-        '''
-        super(DCGAN, self).__init__(input_pipe=input_pipe, z_dim=z_dim, name=name)
-
-
-    def _build_train_graph(self, X):
+    def _build_train_graph(self):
         '''build computational graph for training
         '''
         with tf.variable_scope(self.name):
+            X = tf.placeholder(tf.float32, [None] + self.shape)
             batch_size = tf.shape(X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
             z = tf.random_normal([batch_size, self.z_dim]) # tensor, constant 조합이라도 상관없이 잘 된다. 
             global_step = tf.Variable(0, name='global_step', trainable=False)
@@ -57,7 +50,7 @@ class DCGAN(BaseModel):
                 D_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
                 # learning rate 0.001 => InfoGAN style
-                G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
                 # minimize 에서 자동으로 global_step 을 업데이트해줌
 
             # summaries
@@ -76,6 +69,7 @@ class DCGAN(BaseModel):
             self.all_summary_op = tf.summary.merge_all()
 
             # accesible points
+            self.X = X
             self.D_train_op = D_train_op
             self.G_train_op = G_train_op
             self.fake_sample = G

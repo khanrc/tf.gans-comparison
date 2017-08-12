@@ -10,13 +10,11 @@ slim = tf.contrib.slim
 
 
 class BaseModel(object):
-    def __init__(self, input_pipe, z_dim=100, name='basemodel'):
+    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=100):
         '''
-        training mode: input_pipe = input pipeline
-        generation mode: input_pipe = None
         '''
         self.name = name
-        training = input_pipe is not None
+        self.shape = image_shape
         # check: DCGAN specified BN-params?
         self.bn_params = {
             "decay": 0.99,
@@ -26,7 +24,7 @@ class BaseModel(object):
         }
         self.z_dim = z_dim
         if training == True:
-            self._build_train_graph(input_pipe)
+            self._build_train_graph()
         else:
             self._build_gen_graph()
 

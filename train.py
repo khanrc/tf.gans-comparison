@@ -33,7 +33,7 @@ def input_pipeline(glob_pattern, batch_size, num_threads, num_epochs):
     return X, num_examples
 
 
-def train(num_epochs, batch_size, n_examples):
+def train(input_op, num_epochs, batch_size, n_examples):
     # n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
     # 1 epoch = 1583 steps
     print("\n# of examples: {}".format(n_examples))
@@ -72,8 +72,9 @@ def train(num_epochs, batch_size, n_examples):
                 # 100 step 마다 all_summary_op 를 실행. all_summary_op 에는 heavy op 인 histogram, images 가 포함되어있음.
                 summary_op = model.summary_op if global_step % 100 == 0 else model.all_summary_op
 
-                _ = sess.run(model.G_train_op)
-                _, global_step, summary = sess.run([model.D_train_op, model.global_step, summary_op])
+                batch_X = sess.run(input_op)
+                _ = sess.run(model.G_train_op, {model.X: batch_X})
+                _, global_step, summary = sess.run([model.D_train_op, model.global_step, summary_op], {model.X: batch_X})
 
                 summary_writer.add_summary(summary, global_step=global_step)
 
@@ -103,6 +104,5 @@ if __name__ == "__main__":
 
     # input pipeline
     X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
-    model = config.get_model(FLAGS.model, FLAGS.name, input_pipe=X)
-
-    train(num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples)
+    model = config.get_model(FLAGS.model, FLAGS.name, training=True)
+    train(input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples)

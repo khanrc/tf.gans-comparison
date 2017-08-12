@@ -1,4 +1,4 @@
-import dcgan, lsgan
+import dcgan, lsgan, wgan
 
 '''
 DCGAN, LSGAN, WGAN, WGAN-GP, BEGAN
@@ -10,16 +10,16 @@ More:
 EBGAN, BGAN, MDGAN?
 '''
 
-model_zoo = ['DCGAN', 'LSGAN'] #, 'WGAN', 'WGAN-GP', 'BEGAN']
+model_zoo = ['DCGAN', 'LSGAN', 'WGAN'] # 'WGAN-GP', 'BEGAN']
 
-def get_model(mtype, name, input_pipe):
+def get_model(mtype, name, training):
     model = None
     if mtype == 'DCGAN':
         model = dcgan.DCGAN
     elif mtype == 'LSGAN':
         model = lsgan.LSGAN
     elif mtype == 'WGAN':
-        pass
+        model = wgan.WGAN
     elif mtype == 'WGAN-GP':
         pass
     elif mtype == 'BEGAN':
@@ -29,7 +29,7 @@ def get_model(mtype, name, input_pipe):
 
     assert model, mtype + ' is work in progress'
 
-    return model(input_pipe=input_pipe, name=name)
+    return model(name=name, training=training)
 
 
 def pprint_args(FLAGS):

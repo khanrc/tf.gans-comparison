@@ -7,12 +7,8 @@ from basemodel import BaseModel
 
 
 class LSGAN(BaseModel):
-    def __init__(self, input_pipe, z_dim=100, name='lsgan', a=0., b=1., c=1.):
+    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=1024, a=0., b=1., c=1.):
         '''
-        training mode: input_pipe = input pipeline
-        generation mode: input_pipe = None
-
-        --- LSGAN ---
         a: fake label
         b: real label
         c: real label for G (G가 D를 속이고자 하는 값 - 보통은 real label)
@@ -24,12 +20,13 @@ class LSGAN(BaseModel):
         self.a = a
         self.b = b
         self.c = c
-        super(LSGAN, self).__init__(input_pipe=input_pipe, z_dim=z_dim, name=name)
+        super(LSGAN, self).__init__(name=name, training=training, image_shape=image_shape, z_dim=z_dim)
 
-    def _build_train_graph(self, X):
+    def _build_train_graph(self):
         '''build computational graph for training
         ''' 
         with tf.variable_scope(self.name):
+            X = tf.placeholder(tf.float32, [None] + self.shape)
             batch_size = tf.shape(X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
             z = tf.random_normal([batch_size, self.z_dim]) # tensor, constant 조합이라도 상관없이 잘 된다.
             global_step = tf.Variable(0, name='global_step', trainable=False)
@@ -104,6 +101,7 @@ class LSGAN(BaseModel):
             self.all_summary_op = tf.summary.merge_all()
 
             # accesible points
+            self.X = X
             self.D_train_op = D_train_op
             self.G_train_op = G_train_op
             self.fake_sample = G

@@ -95,5 +95,5 @@ if __name__ == "__main__":
         FLAGS.name = FLAGS.model.lower()
     config.pprint_args(FLAGS)
 
-    model = config.get_model(FLAGS.model, FLAGS.name, input_pipe=None)
+    model = config.get_model(FLAGS.model, FLAGS.name, training=False)
     eval(model, name=FLAGS.name, sample_shape=[4,4], load_all_ckpt=True)
