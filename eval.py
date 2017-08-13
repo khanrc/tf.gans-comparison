@@ -51,7 +51,11 @@ def eval(model, name, sample_shape=[4,4], load_all_ckpt=True):
 
     # training=False => generator 만 생성
     restorer = tf.train.Saver(slim.get_model_variables())
-    with tf.Session() as sess:
+
+    config = tf.ConfigProto()
+    best_gpu = utils.get_best_gpu()
+    config.gpu_options.visible_device_list = str(best_gpu) # Works same as CUDA_VISIBLE_DEVICES!
+    with tf.Session(config=config) as sess:
         ckpts = get_all_checkpoints('./checkpoints/' + name, force=load_all_ckpt)
         size = sample_shape[0] * sample_shape[1]
 

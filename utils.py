@@ -16,8 +16,42 @@ import matplotlib.gridspec as gridspec
 import scipy.misc
 import numpy as np
 
-
 # warnings.simplefilter('error')
+
+def get_best_gpu():
+    '''Dependency: pynvml (for gpu memory informations)
+    '''
+    from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlDeviceGetMemoryInfo
+
+    print '\n===== Check GPU memory ====='
+
+    # byte to megabyte
+    to_mb = lambda x: int(x/1024./1024.) 
+
+    best_idx = -1
+    best_free = 0.
+    nvmlInit()
+    n_gpu = nvmlDeviceGetCount()
+    for i in range(n_gpu):
+        handle = nvmlDeviceGetHandleByIndex(i)
+        name = nvmlDeviceGetName(handle)
+        mem = nvmlDeviceGetMemoryInfo(handle)
+
+        total = to_mb(mem.total)
+        free = to_mb(mem.free)
+        used = to_mb(mem.used)
+        free_ratio = mem.free / float(mem.total)
+
+        print("{} - {}/{} MB (free: {} MB - {:.2%})".format(name, used, total, free, free_ratio))
+
+        if free > best_free:
+            best_free = free
+            best_idx = i
+
+    print '\nSelected GPU is gpu:{}'.format(best_idx)
+    print '============================\n'
+
+    return best_idx
 
 
 # 전체를 다 iterate 하면서 숫자를 셈

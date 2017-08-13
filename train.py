@@ -44,7 +44,10 @@ def train(input_op, num_epochs, batch_size, n_examples):
     if not os.path.exists(ckpt_path):
         tf.gfile.MakeDirs(ckpt_path)
 
-    with tf.Session() as sess:
+    config = tf.ConfigProto()
+    best_gpu = utils.get_best_gpu()
+    config.gpu_options.visible_device_list = str(best_gpu) # Works same as CUDA_VISIBLE_DEVICES!
+    with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer()) # for epochs 
 
