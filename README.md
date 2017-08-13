@@ -15,6 +15,7 @@
 * [ ] Flexible input shape - 64/64 에 최적화시켜 놨는데 유동적으로 바꿀 수 있게 하자!
 * [ ] Flexible learning-times - G/D 가 각각 1번씩만 도는데 지정할 수 있도록 하자!
 * [ ] Use same z for G/D learning - 같은 X/z 조합을 넣어 주는게 맞는 것 같다!
+* [ ] add GPU control
 
 ## GANs
 
