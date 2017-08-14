@@ -20,13 +20,15 @@ import numpy as np
 
 def get_best_gpu():
     '''Dependency: pynvml (for gpu memory informations)
+    return type is integer (gpu_id)
     '''
     from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlDeviceGetMemoryInfo
 
     print '\n===== Check GPU memory ====='
 
     # byte to megabyte
-    to_mb = lambda x: int(x/1024./1024.) 
+    def to_mb(x):
+        return int(x/1024./1024.) 
 
     best_idx = -1
     best_free = 0.

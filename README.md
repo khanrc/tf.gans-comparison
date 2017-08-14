@@ -13,16 +13,17 @@
 * [x] config.py, utils.py, ops.py 쓸데없이 많은 것 같다. 이거 정리좀 해줘야 할 듯 - refactoring => 이것도 딱히 손대기가 좀 애매함. 그래서 일단 놔둔다.
 * [x] inputpipe 에서도 shape 지정하는 부분 잘 구조화해야함 => 구조화하기가 좀 애매한 것 같음. 오히려이렇게 그냥 바꾸고 싶으면 코드 자체를 수정하도록 놔두는 게 더 나을것같음
 * [ ] Flexible input shape - 64/64 에 최적화시켜 놨는데 유동적으로 바꿀 수 있게 하자!
-* [ ] Flexible learning-times - G/D 가 각각 1번씩만 도는데 지정할 수 있도록 하자!
 * [ ] Use same z for G/D learning - 같은 X/z 조합을 넣어 주는게 맞는 것 같다!
-* [ ] add GPU control
+* [ ] add text summary to TensorBoard
+* Flexible learning-times - G/D 가 각각 1번씩만 도는데 지정할 수 있도록 하자!
+	* 일단 lr 로 컨트롤 해 두었는데 바꿔야 할까?
 
 ## GANs
 
 * [x] DCGAN
 * [x] LSGAN
 * [x] WGAN
-* [ ] WGAN-GP
+* [x] WGAN-GP
 * [ ] BEGAN
 * Additional
     * EBGAN, BGAN, DRAGAN, CramerGAN
