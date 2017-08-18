@@ -27,8 +27,7 @@ class LSGAN(BaseModel):
         ''' 
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
-            batch_size = tf.shape(X)[0] # tensor. tf.shape 의 return 이 tf.Dimension 이 아니라 그냥 int32네.
-            z = tf.random_normal([batch_size, self.z_dim]) # tensor, constant 조합이라도 상관없이 잘 된다.
+            z = tf.placeholder(tf.float32, [None, self.z_dim])
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
             G = self._generator(z)

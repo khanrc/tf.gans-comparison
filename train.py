@@ -33,6 +33,10 @@ def input_pipeline(glob_pattern, batch_size, num_threads, num_epochs):
     return X, num_examples
 
 
+def sample_z(shape):
+    return np.random.normal(size=shape)
+
+
 def train(input_op, num_epochs, batch_size, n_examples):
     # n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
     # 1 epoch = 1583 steps
@@ -76,8 +80,10 @@ def train(input_op, num_epochs, batch_size, n_examples):
                 summary_op = model.summary_op if global_step % 100 == 0 else model.all_summary_op
 
                 batch_X = sess.run(input_op)
-                _ = sess.run(model.G_train_op, {model.X: batch_X})
-                _, global_step, summary = sess.run([model.D_train_op, model.global_step, summary_op], {model.X: batch_X})
+                batch_z = sample_z([batch_size, model.z_dim])
+                _ = sess.run(model.G_train_op, {model.z: batch_z})
+                _, global_step, summary = sess.run([model.D_train_op, model.global_step, summary_op], 
+                    {model.X: batch_X, model.z: batch_z})
 
                 summary_writer.add_summary(summary, global_step=global_step)
 
