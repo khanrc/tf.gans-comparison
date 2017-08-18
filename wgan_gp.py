@@ -83,6 +83,7 @@ class WGAN_GP(BaseModel):
 
             # accesible points
             self.X = X
+            self.z = z
             self.D_train_op = C_train_op # train.py 와의 accesibility 를 위해... 흠... 구린데...
             self.G_train_op = G_train_op
             self.fake_sample = G

@@ -101,6 +101,7 @@ class LSGAN(BaseModel):
 
             # accesible points
             self.X = X
+            self.z = z
             self.D_train_op = D_train_op
             self.G_train_op = G_train_op
             self.fake_sample = G
