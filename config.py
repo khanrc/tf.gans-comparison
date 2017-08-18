@@ -1,16 +1,16 @@
-import dcgan, lsgan, wgan, wgan_gp
+import dcgan, lsgan, wgan, wgan_gp, ebgan
 
 '''
-DCGAN, LSGAN, WGAN, WGAN-GP, BEGAN
+DCGAN, LSGAN, WGAN, WGAN-GP, EBGAN, BEGAN
 
 Optional:
 DRAGAN, CramerGAN
 
 More:
-EBGAN, BGAN, MDGAN?
+BGAN, MDGAN?
 '''
 
-model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'BEGAN']
+model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'EBGAN', 'BEGAN']
 
 def get_model(mtype, name, training):
     model = None
@@ -22,6 +22,8 @@ def get_model(mtype, name, training):
         model = wgan.WGAN
     elif mtype == 'WGAN-GP':
         model = wgan_gp.WGAN_GP
+    elif mtype == 'EBGAN':
+        model = ebgan.EBGAN
     elif mtype == 'BEGAN':
         pass
     else:
