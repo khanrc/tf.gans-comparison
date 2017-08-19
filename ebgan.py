@@ -1,4 +1,13 @@
 # coding: utf-8
+'''
+EBGAN 논문에는 mse 를 쓰라고 되어 있으나, 실제로 그렇게 써서 그대로 파라메터를 적용해 보면 작동하지 않음
+구현체들을 찾아보면 특이한 로스를 쓰는데, 이건 rmse 도 아니고 l2 norm 도 아니고 뭥미...
+실제로 mse 를 쓰려면 lr 을 낮춰줘야함: 1e-3 => 1e-4. (참고: pytorch 구현체에서는 2e-4)
+* mse: mean(dx**2) = sum(dx**2) / # of dx
+* rmse: root(mse)
+* l2_norm: root(sum(dx**2))
+* energy loss on implementations: root(sum(dx**2)) / # of dx
+'''
 import tensorflow as tf
 slim = tf.contrib.slim
 from utils import expected_shape
@@ -7,7 +16,7 @@ from basemodel import BaseModel
 
 
 class EBGAN(BaseModel):
-    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=1024, use_pt_regularizer=False, pt_weight=0.1, margin=20.):
+    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=100, use_pt_regularizer=False, pt_weight=0.1, margin=20.):
         '''
         pt_weight 만으로도 pt_reg 를 쓰냐 안쓰냐 조정할 수 있지만, 만약 안쓰면서도 pt_loss 를 체크해보고 싶은 경우를 위해
         use_pt_regularizer 를 따로 두었음.
@@ -28,12 +37,13 @@ class EBGAN(BaseModel):
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
             G = self._generator(z)
-            D_real_latent, D_real_mse = self._discriminator(X)
-            D_fake_latent, D_fake_mse = self._discriminator(G, reuse=True)
+            # mse is energy
+            D_real_latent, D_real_energy = self._discriminator(X)
+            D_fake_latent, D_fake_energy = self._discriminator(G, reuse=True)
 
-            D_fake_hinge = tf.maximum(0., self.m - D_fake_mse) # hinge_loss
-            D_loss = D_real_mse + D_fake_hinge
-            G_loss = D_fake_mse
+            D_fake_hinge = tf.maximum(0., self.m - D_fake_energy) # hinge_loss
+            D_loss = D_real_energy + D_fake_hinge
+            G_loss = D_fake_energy
             pt_loss = self.pt_weight * self.pt_regularizer(D_fake_latent) # pt_loss
             if self.use_pt_regularizer:
                 G_loss += pt_loss
@@ -45,9 +55,9 @@ class EBGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -55,8 +65,9 @@ class EBGAN(BaseModel):
                 tf.summary.scalar('G_loss', G_loss),
                 tf.summary.scalar('D_loss', D_loss),
                 tf.summary.scalar('pt_loss', pt_loss),
-                tf.summary.scalar('D_loss/real_mse', D_real_mse),
-                tf.summary.scalar('D_loss/fake_mse', D_fake_mse)
+                tf.summary.scalar('D_energy/real', D_real_energy),
+                tf.summary.scalar('D_energy/fake', D_fake_energy),
+                tf.summary.scalar('D_fake_hinge', D_fake_hinge)
             ])
 
             # sparse-step summary
@@ -86,7 +97,7 @@ class EBGAN(BaseModel):
                 # decoder
                 net = slim.conv2d_transpose(net, 128) # 16x16
                 net = slim.conv2d_transpose(net, 64) # 32x32
-                x_recon = slim.conv2d_transpose(net, 3, activation_fn=None)
+                x_recon = slim.conv2d_transpose(net, 3, activation_fn=None, normalizer_fn=None)
                 expected_shape(x_recon, [64, 64, 3])
             
             mse = tf.losses.mean_squared_error(X, x_recon) # loss 를 mse 로 계산하므로 sigmoid 를 걸면 안되는 것 같음...

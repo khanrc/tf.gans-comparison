@@ -24,7 +24,7 @@
 * [x] LSGAN
 * [x] WGAN
 * [x] WGAN-GP
-* [ ] EBGAN
+* [x] EBGAN
 * [ ] BEGAN
 * Additional
     * BGAN, DRAGAN, CramerGAN
