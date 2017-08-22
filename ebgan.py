@@ -1,12 +1,12 @@
 # coding: utf-8
 '''
-EBGAN 논문에는 mse 를 쓰라고 되어 있으나, 실제로 그렇게 써서 그대로 파라메터를 적용해 보면 작동하지 않음
-구현체들을 찾아보면 특이한 로스를 쓰는데, 이건 rmse 도 아니고 l2 norm 도 아니고 뭥미...
+EBGAN 논문에는 mse 라고 되어 있으나, 수식을 보면 l2 norm 인것 같기도 하고.
+파라메터 테스트를 해 보면 l2 norm 이 맞는 것 같음 - 테스트 필요
 실제로 mse 를 쓰려면 lr 을 낮춰줘야함: 1e-3 => 1e-4. (참고: pytorch 구현체에서는 2e-4)
+
 * mse: mean(dx**2) = sum(dx**2) / # of dx
 * rmse: root(mse)
-* l2_norm: root(sum(dx**2))
-* energy loss on implementations: root(sum(dx**2)) / # of dx
+* l2_norm: root(sum(dx**2)) / # of dx
 '''
 import tensorflow as tf
 slim = tf.contrib.slim
@@ -55,9 +55,9 @@ class EBGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -100,9 +100,11 @@ class EBGAN(BaseModel):
                 x_recon = slim.conv2d_transpose(net, 3, activation_fn=None, normalizer_fn=None)
                 expected_shape(x_recon, [64, 64, 3])
             
-            mse = tf.losses.mean_squared_error(X, x_recon) # loss 를 mse 로 계산하므로 sigmoid 를 걸면 안되는 것 같음...
+            # energy = tf.losses.mean_squared_error(X, x_recon) # loss 를 mse 로 계산하므로 sigmoid 를 걸면 안되는 것 같음...
+            energy = tf.sqrt(tf.reduce_sum(tf.square(X-x_recon), axis=[1,2,3]))
+            energy = tf.reduce_mean(energy)
 
-            return latent, mse
+            return latent, energy
 
     def _generator(self, z, reuse=False):
         with tf.variable_scope('G', reuse=reuse):
@@ -135,3 +137,4 @@ class EBGAN(BaseModel):
         N = tf.cast(tf.shape(lf)[0], tf.float32) # batch_size
         pt_loss = (tf.reduce_sum(cos_sim)-N) / (N*(N-1))
         return pt_loss
+        
