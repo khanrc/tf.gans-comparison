@@ -81,9 +81,9 @@ def train(input_op, num_epochs, batch_size, n_examples):
 
                 batch_X = sess.run(input_op)
                 batch_z = sample_z([batch_size, model.z_dim])
-                _ = sess.run(model.G_train_op, {model.z: batch_z})
-                _, global_step, summary = sess.run([model.D_train_op, model.global_step, summary_op], 
-                    {model.X: batch_X, model.z: batch_z})
+
+                _, summary = sess.run([model.D_train_op, summary_op], {model.X: batch_X, model.z: batch_z})
+                _, global_step = sess.run([model.G_train_op, model.global_step], {model.z: batch_z})
 
                 summary_writer.add_summary(summary, global_step=global_step)
 
