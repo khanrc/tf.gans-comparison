@@ -40,12 +40,16 @@ class BEGAN(BaseModel):
             D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/D/')
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
+            # 논문에는 stall 하면 0.5 씩 줄이라고 되어 있고, carpedm20 은 100000 step 마다 0.5 씩 줄임 - 너무 무거움
+            # https://github.com/Heumi/BEGAN-tensorflow/ 에서는 2000 step 마다 0.95 씩 줄임
+            st_lr = 1e-4
+            lr = tf.train.exponential_decay(st_lr, global_step, 3000, 0.95, staircase=True)
             with tf.variable_scope('D_train_op'):
                 with tf.control_dependencies(D_update_ops):
-                    D_train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                    D_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.variable_scope('G_train_op'):
                 with tf.control_dependencies(G_update_ops):
-                    G_train_op = tf.train.AdamOptimizer(learning_rate=0.0001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                    G_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # k 는 D_train 에만 관여
             # G_train 할 때에는 D_real 을 계산하지 않아도 됨
@@ -66,15 +70,16 @@ class BEGAN(BaseModel):
                 tf.summary.scalar('D_energy/fake', D_fake_energy),
                 tf.summary.scalar('convergence_measure', M),
                 tf.summary.scalar('balance', balance),
-                tf.summary.scalar('k', k)
+                tf.summary.scalar('k', k),
+                tf.summary.scalar('lr', lr)
             ])
 
             # sparse-step summary
             tf.summary.image('fake_sample', G, max_outputs=6)
             # histogram all varibles
             # gradients 도 보면 좋긴 한데 그러면 위에도 수정해야되서 귀찮으니 일단 이렇게
-            for var in tf.trainable_variables():
-                tf.summary.histogram(var.op.name, var)
+            # for var in tf.trainable_variables():
+            #     tf.summary.histogram(var.op.name, var)
 
             self.all_summary_op = tf.summary.merge_all()
 
@@ -87,10 +92,10 @@ class BEGAN(BaseModel):
             self.global_step = global_step
 
     # BEGAN 에서는 기본적으론 decoder 를 generator 로 쓰기 때문에 nh (h_dim) 와 z_dim 이 같아야 한다.
-    # 단, 꼭 decoder 를 generator 로 쓸 필요는 없고 그 경우 nh 와 z_dim 이 달라도 된다.
+    # 꼭 decoder 를 generator 로 쓸 필요는 없음.
     def _encoder(self, X, reuse=False):
         with tf.variable_scope('encoder', reuse=reuse):
-            nf = 64
+            nf = 128
             nh = self.z_dim
 
             with slim.arg_scope([slim.conv2d], kernel_size=[3,3], padding='SAME', activation_fn=tf.nn.elu):
@@ -119,7 +124,7 @@ class BEGAN(BaseModel):
 
     def _decoder(self, h, reuse=False):
         with tf.variable_scope('decoder', reuse=reuse):
-            nf = 64
+            nf = 128
             nh = self.z_dim
 
             h0 = slim.fully_connected(h, 8*8*nf, activation_fn=None) # h0
@@ -150,7 +155,7 @@ class BEGAN(BaseModel):
             h = self._encoder(X, reuse=reuse)
             x_recon = self._decoder(h, reuse=reuse)
 
-            energy = tf.abs(X-x_recon)
+            energy = tf.abs(X-x_recon) # L1 loss
             energy = tf.reduce_mean(energy)
 
             return energy
