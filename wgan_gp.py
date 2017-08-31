@@ -35,11 +35,11 @@ class WGAN_GP(BaseModel):
             # reduce_mean!
             W_dist = tf.reduce_mean(C_real - C_fake) # maximize
             C_loss = -W_dist # minimize
-            G_loss = tf.reduce_mean(-C_fake) # =W_dist. 근데 C_real 이 G 와 상관없으므로 생략해줌. 넣어도 속도는 똑같긴 하겠지?
+            G_loss = tf.reduce_mean(-C_fake)
 
             # Gradient Penalty (GP)
             ld = 10.
-            eps = tf.random_uniform(shape=[batch_size, 1, 1, 1], minval=0., maxval=1.)
+            eps = tf.random_uniform(shape=[tf.shape(X)[0], 1, 1, 1], minval=0., maxval=1.)
             x_hat = eps*X + (1-eps)*G 
             C_xhat = self._critic(x_hat, reuse=True)
             C_xhat_grad = tf.gradients(C_xhat, x_hat)[0] # gradient of D(x_hat)

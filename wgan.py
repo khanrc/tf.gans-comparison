@@ -29,7 +29,7 @@ class WGAN(BaseModel):
             # reduce_mean!
             W_dist = tf.reduce_mean(C_real - C_fake) # maximize
             C_loss = -W_dist # minimize
-            G_loss = tf.reduce_mean(-C_fake) # =W_dist. 근데 C_real 이 G 와 상관없으므로 생략해줌. 넣어도 속도는 똑같긴 하겠지?
+            G_loss = tf.reduce_mean(-C_fake)
 
             C_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/critic/')
             G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/generator/')
@@ -77,9 +77,7 @@ class WGAN(BaseModel):
             self.summary_op = tf.summary.merge([
                 tf.summary.scalar('G_loss', G_loss),
                 tf.summary.scalar('C_loss', C_loss),
-                tf.summary.scalar('W_dist', W_dist),
-                # tf.summary.scalar('C_loss/real', C_real), # 무슨 의미가 있는지는 모르겠는데 그냥 궁금해서
-                # tf.summary.scalar('C_loss/fake', C_fake) # 는 vector 라 안되네
+                tf.summary.scalar('W_dist', W_dist)
             ])
 
             # sparse-step summary
