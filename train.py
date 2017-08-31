@@ -21,7 +21,9 @@ def build_parser():
     models_str = ' / '.join(config.model_zoo)
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
     parser.add_argument('--name', help='default: name=model')
+    parser.add_argument('--renew', action='store_true', help='train model from scratch - clean saved checkpoints and summaries', default=False)
     # more arguments: dataset
+    # renew... 가 좋은 아규먼트일까?
 
     return parser
 
@@ -37,7 +39,7 @@ def sample_z(shape):
     return np.random.normal(size=shape)
 
 
-def train(input_op, num_epochs, batch_size, n_examples):
+def train(input_op, num_epochs, batch_size, n_examples, renew=False):
     # n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
     # 1 epoch = 1583 steps
     print("\n# of examples: {}".format(n_examples))
@@ -45,6 +47,9 @@ def train(input_op, num_epochs, batch_size, n_examples):
 
     summary_path = os.path.join('./summary/', model.name)
     ckpt_path = os.path.join('./checkpoints', model.name)
+    if renew:
+        tf.gfile.DeleteRecursively(summary_path)
+        tf.gfile.DeleteRecursively(ckpt_path)
     if not os.path.exists(ckpt_path):
         tf.gfile.MakeDirs(ckpt_path)
 
@@ -114,4 +119,4 @@ if __name__ == "__main__":
     # input pipeline
     X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
     model = config.get_model(FLAGS.model, FLAGS.name, training=True)
-    train(input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples)
+    train(input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples, renew=FLAGS.renew)
