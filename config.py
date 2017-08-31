@@ -1,4 +1,4 @@
-import dcgan, lsgan, wgan, wgan_gp, ebgan
+import dcgan, lsgan, wgan, wgan_gp, ebgan, began
 
 '''
 DCGAN, LSGAN, WGAN, WGAN-GP, EBGAN, BEGAN
@@ -25,7 +25,7 @@ def get_model(mtype, name, training):
     elif mtype == 'EBGAN':
         model = ebgan.EBGAN
     elif mtype == 'BEGAN':
-        pass
+        model = began.BEGAN
     else:
         assert False, mtype + ' is not in the model zoo'
 
