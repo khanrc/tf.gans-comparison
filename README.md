@@ -25,9 +25,11 @@
 * [x] WGAN
 * [x] WGAN-GP
 * [x] EBGAN
-* [ ] BEGAN
+* [x] BEGAN
+* [x] DRAGAN
+* [ ] SGAN
 * Additional
-    * BGAN, DRAGAN, CramerGAN
+    * BGAN, CramerGAN
 
 ## Datasets
 
