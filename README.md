@@ -12,6 +12,7 @@
     * 이건 했는데 image_shape 관련해서 좀 마음에 안 든다. 근데 일단 놔두자...
 * [x] config.py, utils.py, ops.py 쓸데없이 많은 것 같다. 이거 정리좀 해줘야 할 듯 - refactoring => 이것도 딱히 손대기가 좀 애매함. 그래서 일단 놔둔다.
 * [x] inputpipe 에서도 shape 지정하는 부분 잘 구조화해야함 => 구조화하기가 좀 애매한 것 같음. 오히려이렇게 그냥 바꾸고 싶으면 코드 자체를 수정하도록 놔두는 게 더 나을것같음
+* [ ] LSUN dataset - 이건 좀 진짜 필요할 것 같음. BEGAN 같은 게 얼굴 말고 다른데도 잘 될지를 볼 수 있을 듯.
 * [ ] Flexible input shape - 64/64 에 최적화시켜 놨는데 유동적으로 바꿀 수 있게 하자!
     * MNIST 도 커버할 수 있으면 참 좋을텐데 그건 어렵겠지...?
 * [ ] add text summary to TensorBoard
@@ -27,9 +28,9 @@
 * [x] EBGAN
 * [x] BEGAN
 * [x] DRAGAN
-* [ ] SGAN
 * Additional
-    * BGAN, CramerGAN
+    * BGAN, CramerGAN, GoGAN, MDGAN
+    * SGAN 은 CGAN 계열임
 
 ## Datasets
 
