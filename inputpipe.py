@@ -19,11 +19,11 @@ def read_parse_preproc(filename_queue):
         )
 
         image = tf.decode_raw(features["image"], tf.uint8)
-        # shape = tf.cast(features["shape"], tf.int32) # 쓸데가 없네
+        # shape = tf.cast(features["shape"], tf.int32) # useless
 
-        image = tf.reshape(image, [64, 64, 3]) # 여기의 image_shape 은 명시적으로 지정해줘야 함
+        image = tf.reshape(image, [64, 64, 3]) # The image_shape must be explicitly specified
         image = tf.cast(image, tf.float32)
-        image = image / 127.5 - 1.0
+        image = image / 127.5 - 1.0 # preproc - normalize
         
         return [image]
 

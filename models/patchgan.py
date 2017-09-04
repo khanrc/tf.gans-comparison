@@ -6,8 +6,11 @@ import ops
 from basemodel import BaseModel
 
 '''
-cyclegan / applegan (이름이 모더라) 에서 나온 건데, D 를 patch 단위로 적용하는 방식.
-실제 구현 시에는 그냥 D 에서 fc 를 떼고 conv 결과로부터 logit 을 구하면 conv 결과가 spatial 한 정보를 담고 있으므로 patchgan 을 구현할 수 있음 
+PatchGAN is not from published paper, but from `CycleGAN` and 
+`Learning from Simulated and Unsupervised Images through Adversarial Training`.
+This method use discriminator for local patches and final D_loss is calculated by mean of losses.
+In actual implementation, just use logits from last conv layer in discriminator. 
+The each logit has spatial information.
 '''
 
 class PatchGAN(BaseModel):
@@ -37,9 +40,8 @@ class PatchGAN(BaseModel):
             with tf.control_dependencies(D_update_ops):
                 D_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                # learning rate 0.001 => InfoGAN style
+                # 1e-3 lr for G shows better results
                 G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
-                # minimize 에서 자동으로 global_step 을 업데이트해줌
 
             # summaries
             # per-step summary
@@ -65,6 +67,7 @@ class PatchGAN(BaseModel):
             self.global_step = global_step
 
 
+    # DCGAN based
     def _discriminator(self, X, reuse=False):
         with tf.variable_scope('D', reuse=reuse):
             net = X
@@ -80,8 +83,6 @@ class PatchGAN(BaseModel):
                 net = slim.conv2d(net, 512, stride=1)
                 expected_shape(net, [8, 8, 512])
 
-            # net = slim.flatten(net)
-            # logits = slim.fully_connected(net, 1, activation_fn=None)
             logits = slim.conv2d(net, 1, kernel_size=[3,3], stride=1, activation_fn=None, normalizer_fn=None)
             prob = tf.sigmoid(logits)
 

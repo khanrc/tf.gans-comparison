@@ -1,13 +1,4 @@
 # coding: utf-8
-'''
-EBGAN 논문에는 mse 라고 되어 있으나, 수식을 보면 l2 norm 인것 같기도 하고.
-파라메터 테스트를 해 보면 l2 norm 이 맞는 것 같음 - 테스트 필요
-실제로 mse 를 쓰려면 lr 을 낮춰줘야함: 1e-3 => 1e-4. (참고: pytorch 구현체에서는 2e-4)
-
-* mse: mean(dx**2) = sum(dx**2) / # of dx
-* rmse: root(mse)
-* l2_norm: root(sum(dx**2)) / # of dx
-'''
 import tensorflow as tf
 slim = tf.contrib.slim
 from utils import expected_shape
@@ -29,8 +20,6 @@ class EBGAN(BaseModel):
         super(EBGAN, self).__init__(name=name, training=training, image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
-        '''build computational graph for training
-        '''
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
@@ -100,7 +89,7 @@ class EBGAN(BaseModel):
                 x_recon = slim.conv2d_transpose(net, 3, activation_fn=None, normalizer_fn=None)
                 expected_shape(x_recon, [64, 64, 3])
             
-            energy = tf.sqrt(tf.reduce_sum(tf.square(X-x_recon), axis=[1,2,3]))
+            energy = tf.sqrt(tf.reduce_sum(tf.square(X-x_recon), axis=[1,2,3])) # l2-norm error
             energy = tf.reduce_mean(energy)
 
             return latent, energy
@@ -131,7 +120,7 @@ class EBGAN(BaseModel):
         # l2_norm = tf.sqrt(tf.reduce_sum(tf.square(lf), axis=1, keep_dims=True))
         l2_norm = tf.norm(lf, axis=1, keep_dims=True)
         expected_shape(l2_norm, [1])
-        unit_lf = lf / (l2_norm + eps) # this is unit vector?
+        unit_lf = lf / (l2_norm + eps) 
         cos_sim = tf.square(tf.matmul(unit_lf, unit_lf, transpose_b=True)) # [N, h_dim] x [h_dim, N] = [N, N]
         N = tf.cast(tf.shape(lf)[0], tf.float32) # batch_size
         pt_loss = (tf.reduce_sum(cos_sim)-N) / (N*(N-1))

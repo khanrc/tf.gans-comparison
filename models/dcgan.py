@@ -5,26 +5,13 @@ from utils import expected_shape
 import ops
 from basemodel import BaseModel
 
-'''
-일단 MNIST 는 무시하자... 귀찮다.
-MNIST [28, 28, 1] - not sure
-D: [28, 28, 1] => [14, 14, 64] => [7, 7, 128] => [1]
-G: [100] => [4*4*512] => [14, 14, 64] => [28, 28, 1]
-
-CelebA, LSUN [64, 64, 3]
-D: [64, 64, 3] => [32, 32, 64] => [16, 16, 128] => [8, 8, 256] => [4, 4, 512] => [1]
-G: [100] => [4*4*1024] => [8, 8, 512] => [16, 16, 256] => [32, 32, 128] => [64, 64, 3]
-
---- hyperparams
-adam => SGD
-batch size 128
-init - normal dist + stddev 0.02
+'''Original hyperparams:
+optimizer - SGD
+init - stddev 0.02
 '''
 
 class DCGAN(BaseModel):
     def _build_train_graph(self):
-        '''build computational graph for training
-        '''
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
@@ -48,9 +35,8 @@ class DCGAN(BaseModel):
             with tf.control_dependencies(D_update_ops):
                 D_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                # learning rate 0.001 => InfoGAN style
+                # learning rate 2e-4/1e-3
                 G_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
-                # minimize 에서 자동으로 global_step 을 업데이트해줌
 
             # summaries
             # per-step summary

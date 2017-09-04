@@ -12,15 +12,13 @@ class BEGAN(BaseModel):
         super(BEGAN, self).__init__(name=name, training=training, image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
-        '''build computational graph for training
-        '''
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
             G = self._generator(z)
-            # BEGAN 에서는 이 값을 energy 라고 부르지는 않음. EBGAN-concept.
+            # Discriminator is not called an energy function in BEGAN. The naming is from EBGAN.
             D_real_energy = self._discriminator(X)
             D_fake_energy = self._discriminator(G, reuse=True)
 
@@ -40,8 +38,9 @@ class BEGAN(BaseModel):
             D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/D/')
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
-            # 논문에는 stall 하면 0.5 씩 줄이라고 되어 있고, carpedm20 은 100000 step 마다 0.5 씩 줄임 - 너무 무거움
-            # https://github.com/Heumi/BEGAN-tensorflow/ 에서는 2000 step 마다 0.95 씩 줄임
+            # The authors suggest decaying learning rate by 0.5 when the convergence mesure stall
+            # carpedm20 decays by 0.5 per 100000 steps
+            # Heumi decays by 0.95 per 2000 steps (https://github.com/Heumi/BEGAN-tensorflow/)
             st_lr = 1e-4
             lr = tf.train.exponential_decay(st_lr, global_step, 3000, 0.95, staircase=True)
             with tf.variable_scope('D_train_op'):
@@ -51,14 +50,11 @@ class BEGAN(BaseModel):
                 with tf.control_dependencies(G_update_ops):
                     G_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
-            # k 는 D_train 에만 관여
-            # G_train 할 때에는 D_real 을 계산하지 않아도 됨
-            # [!] control_dependencies 아래에는 ops 정의가 들어가야 하는 듯 함.
-            # 아래에서 update_k = tf.assign 부분을 밖으로 빼고 그냥 update_k 만 놓으면 control_dependency 가 제대로 연결이 안 됨.
+            # It should be ops `define` under control_dependencies
             lambd_k = 0.001
             with tf.control_dependencies([D_train_op]): # should be iterable
                 with tf.variable_scope('update_k'):
-                    update_k = tf.assign(k, tf.clip_by_value(k + lambd_k * balance, 0., 1.))
+                    update_k = tf.assign(k, tf.clip_by_value(k + lambd_k * balance, 0., 1.)) # define
             D_train_op = update_k # run op
 
             # summaries
@@ -77,7 +73,6 @@ class BEGAN(BaseModel):
             # sparse-step summary
             tf.summary.image('fake_sample', G, max_outputs=6)
             # histogram all varibles
-            # gradients 도 보면 좋긴 한데 그러면 위에도 수정해야되서 귀찮으니 일단 이렇게
             # for var in tf.trainable_variables():
             #     tf.summary.histogram(var.op.name, var)
 
@@ -91,8 +86,6 @@ class BEGAN(BaseModel):
             self.fake_sample = G
             self.global_step = global_step
 
-    # BEGAN 에서는 기본적으론 decoder 를 generator 로 쓰기 때문에 nh (h_dim) 와 z_dim 이 같아야 한다.
-    # 꼭 decoder 를 generator 로 쓸 필요는 없음.
     def _encoder(self, X, reuse=False):
         with tf.variable_scope('encoder', reuse=reuse):
             nf = 128

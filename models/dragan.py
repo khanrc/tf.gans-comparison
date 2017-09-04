@@ -32,7 +32,7 @@ class DRAGAN(BaseModel):
             # x_hat = alpha*x + (1-alpha)*x_noise = x_i + (1-alpha)*noise_i
             ld = 10.
             C = 0.5
-            
+
             shape = tf.shape(X)
             eps = tf.random_uniform(shape=shape, minval=0., maxval=1.)
             x_mean, x_var = tf.nn.moments(X, axes=[0,1,2,3])

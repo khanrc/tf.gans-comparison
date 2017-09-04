@@ -15,7 +15,6 @@ class LSGAN(BaseModel):
 
         Pearson chi-square divergence: a=-1, b=1, c=0.
         Intuitive (real label 1, fake label 0): a=0, b=c=1.
-        check - 현재 D 의 output 이 sigmoid 이므로, a/b/c 값에 맞게 scale 되어야 함
         '''
         self.a = a
         self.b = b
@@ -127,9 +126,8 @@ class LSGAN(BaseModel):
 
             return d_value
 
-    # LSGAN 에서는 원래는 LSUN 데이터에 대해 112x112 image 를 생성함
-    # 시작 크기에서 4번 *2 해줘서 총 16 배가 되는 건 동일함. 대신 시작 크기를 7x7 로 함.
-    # CelebA
+    # Originally, LSGAN used 112x112 LSUN images
+    # We used 64x64 CelebA images
     def _generator(self, z, reuse=False):
         with tf.variable_scope('G', reuse=reuse):
             net = z

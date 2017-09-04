@@ -24,16 +24,17 @@ def sample_z(shape):
 
 def get_all_checkpoints(ckpt_dir, force=False):
     '''
-    학습이 끊어졌다 재개되면 get_checkpoint_state 로는 모든 체크포인트를 가져올 수 없다 (재개된 시점부터 다시 기록됨).
-    이걸 강제로 다 가져오는 함수 (when force=True)
+    When the learning is interrupted and resumed, all checkpoints can not be fetched with get_checkpoint_state 
+    (The checkpoint state is rewritten from the point of resume). 
+    This function fetch all checkpoints forcely when arguments force=True.
     '''
 
     if force:
         ckpts = os.listdir(ckpt_dir) # get all fns
-        ckpts = map(lambda p: os.path.splitext(p)[0], ckpts) # del ext => 중복 fn 생성됨
+        ckpts = map(lambda p: os.path.splitext(p)[0], ckpts) # del ext
         ckpts = set(ckpts) # unique
-        ckpts = filter(lambda x: x.split('-')[-1].isdigit(), ckpts) # ckpt 가 아닌것들 필터링
-        ckpts = sorted(ckpts, key=lambda x: int(x.split('-')[-1])) # 정렬
+        ckpts = filter(lambda x: x.split('-')[-1].isdigit(), ckpts) # filter non-ckpt
+        ckpts = sorted(ckpts, key=lambda x: int(x.split('-')[-1])) # sort
         ckpts = map(lambda x: os.path.join(ckpt_dir, x), ckpts) # fn => path
     else:
         ckpts = tf.train.get_checkpoint_state(ckpt_dir).all_model_checkpoint_paths
@@ -49,7 +50,7 @@ def eval(model, name, sample_shape=[4,4], load_all_ckpt=True):
         tf.gfile.DeleteRecursively(dir_name)
     tf.gfile.MakeDirs(dir_name)
 
-    # training=False => generator 만 생성
+    # training=False => generator only
     restorer = tf.train.Saver(slim.get_model_variables())
 
     config = tf.ConfigProto()
@@ -76,10 +77,8 @@ def eval(model, name, sample_shape=[4,4], load_all_ckpt=True):
 
 
 '''
-하지만 이렇게 말고도 그냥 imagemagick 을 통해 할 수 있다:
+You can create a gif movie through imagemagick on the commandline:
 $ convert -delay 20 eval/* movie.gif
-
-아래처럼 할꺼면 shading 효과를 넣어주면 좋을 듯 (convert 로는 하기 힘듦)
 '''
 # def to_gif(dir_name='eval'):
 #     images = []

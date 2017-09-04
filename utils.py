@@ -22,7 +22,11 @@ def get_best_gpu():
     '''Dependency: pynvml (for gpu memory informations)
     return type is integer (gpu_id)
     '''
-    from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlDeviceGetMemoryInfo
+    try:
+        from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlDeviceGetMemoryInfo
+    except Exception, e:
+        print '[!] {} => Use default GPU settings ...\n'.format(e)
+        return ''
 
     print '\n===== Check GPU memory ====='
 
@@ -56,8 +60,8 @@ def get_best_gpu():
     return best_idx
 
 
-# 전체를 다 iterate 하면서 숫자를 셈
-# 총 20만개 examples (128개 tfrecord files) iterate 하는데 1.5초 정도 걸림
+# Iterate the whole dataset and count the numbers
+# CelebA contains about 200k examples with 128 tfrecord files and it takes about 1.5s to iterate
 def num_examples_from_tfrecords(tfrecords_list):
     num_examples = 0 
     for path in tfrecords_list:
@@ -66,10 +70,11 @@ def num_examples_from_tfrecords(tfrecords_list):
 
 
 def expected_shape(tensor, expected):
-    """batch size N shouldn't be set. you can use shape instead of tensor.
+    """batch size N shouldn't be set. 
+    you can use shape of tensor instead of tensor itself.
     
     Usage:
-    # batch size N is omitted.
+    # batch size N is skipped.
     expected_shape(tensor, [28, 28, 1])
     expected_shape(tensor.shape, [28, 28, 1])
     """
@@ -105,7 +110,7 @@ def plot(samples, shape=(4,4), figratio=0.75):
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_aspect('equal')
-        plt.imshow(sample) # cmap hmm...
+        plt.imshow(sample) # checks cmap ...
 
     return fig
 
@@ -116,7 +121,7 @@ def show_all_variables():
 
 
 def merge(images, size):
-    """merge images.
+    """merge images - burrowed from @carpedm20.
 
     checklist before/after imsave:
     * are images post-processed? for example - denormalization

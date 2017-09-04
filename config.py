@@ -1,15 +1,13 @@
-import dcgan, lsgan, wgan, wgan_gp, ebgan, began, dragan, patchgan
+from models import *
 
 '''
-DCGAN, LSGAN, WGAN, WGAN-GP, EBGAN, BEGAN
+DCGAN, LSGAN, WGAN, WGAN-GP, EBGAN, BEGAN, DRAGAN
 
 Optional:
-DRAGAN, CramerGAN
+CramerGAN
 
 More:
 BGAN, MDGAN?
-
-+ SGAN (StackGAN)
 '''
 
 model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'EBGAN', 'BEGAN', 'DRAGAN', 'PATCHGAN']

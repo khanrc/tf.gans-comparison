@@ -1,9 +1,5 @@
 # coding: utf-8
 
-'''
-histogram 이나 image 는 heavy-summary 라서 가끔 하고 싶은데, 코드가 지저분해진다. 어떻게 해야 깔끔하게 할 수 있을까?
-'''
-
 import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
@@ -23,7 +19,6 @@ def build_parser():
     parser.add_argument('--name', help='default: name=model')
     parser.add_argument('--renew', action='store_true', help='train model from scratch - clean saved checkpoints and summaries', default=False)
     # more arguments: dataset
-    # renew... 가 좋은 아규먼트일까?
 
     return parser
 
@@ -76,12 +71,10 @@ def train(input_op, num_epochs, batch_size, n_examples, renew=False):
             global_step = sess.run(model.global_step)
             print('\nRestore from {} ... starting global step is {}\n'.format(ckpt.model_checkpoint_path, global_step))
             pbar.update(global_step)
-            # 이게 안되면 ckpt.model_checkpoint_path.split('-')[-1] 로 가져와도 됨... 근데뭔가 이렇게 그래프에 박아서 저장한 경우에는 여기서 가져와야 할 것 같다.
-            # 그러지 않으면 이렇게 저장한 의미가 없잖아?
 
         try:
             while not coord.should_stop():
-                # 100 step 마다 all_summary_op 를 실행. all_summary_op 에는 heavy op 인 histogram, images 가 포함되어있음.
+                # model.all_summary_op contains histogram summary and image summary which are heavy op
                 summary_op = model.summary_op if global_step % 100 == 0 else model.all_summary_op
 
                 batch_X = sess.run(input_op)

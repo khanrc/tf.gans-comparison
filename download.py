@@ -1,7 +1,8 @@
 """
 Burrowed from https://github.com/carpedm20/DCGAN-tensorflow/blob/master/download.py
----
+"""
 
+"""
 Modification of https://github.com/stanfordnlp/treelstm/blob/master/scripts/download.py
 Downloads the following:
 - Celeb-A dataset
