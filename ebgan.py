@@ -100,7 +100,6 @@ class EBGAN(BaseModel):
                 x_recon = slim.conv2d_transpose(net, 3, activation_fn=None, normalizer_fn=None)
                 expected_shape(x_recon, [64, 64, 3])
             
-            # energy = tf.losses.mean_squared_error(X, x_recon) # loss 를 mse 로 계산하므로 sigmoid 를 걸면 안되는 것 같음...
             energy = tf.sqrt(tf.reduce_sum(tf.square(X-x_recon), axis=[1,2,3]))
             energy = tf.reduce_mean(energy)
 
