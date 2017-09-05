@@ -15,7 +15,10 @@
 * [ ] LSUN dataset - 이건 좀 진짜 필요할 것 같음. BEGAN 같은 게 얼굴 말고 다른데도 잘 될지를 볼 수 있을 듯.
 * [ ] Flexible input shape - 64/64 에 최적화시켜 놨는데 유동적으로 바꿀 수 있게 하자!
     * MNIST 도 커버할 수 있으면 참 좋을텐데 그건 어렵겠지...?
-* [ ] add text summary to TensorBoard
+* [x] add text summary to TensorBoard
+    * model 의 init arguments 를 다 모아서 text 로 써주면 좋겠다!
+    * 근데이거 tf1.2 에서는 warning 도 나고 좀 구림... tf bug
+* [ ] 왜 텐서보드에서 여러개 동시에 못볼까?
 * Flexible learning-times - G/D 가 각각 1번씩만 도는데 지정할 수 있도록 하자!
 	* 일단 lr 로 컨트롤 해 두었는데 바꿔야 할까?
 
@@ -85,9 +88,8 @@ Conditional GAN 류는 포함하지 않음 (CGAN, acGAN, SGAN 등)
 
 - 네트워크 구조가 가장 간단함
 - G 의 lr 을 조정했을 때 더 좋은 결과가 나옴
-- DCGAN 에 PatchGAN 컨셉을 더해보았으나 특별히 좋은 결과가 나오진 않음 
 
-DCGAN vs. DCGAN.G1e-3 vs. DCGAN.G1e-3.patchgan
+DCGAN vs. DCGAN.G1e-3
 
 ### LSGAN
 
