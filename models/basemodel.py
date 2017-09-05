@@ -8,7 +8,9 @@ slim = tf.contrib.slim
 
 
 class BaseModel(object):
-    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=100):
+    FAKE_MAX_OUTPUT = 6
+
+    def __init__(self, name, training, D_lr, G_lr, image_shape=[64, 64, 3], z_dim=100):
         self.name = name
         self.shape = image_shape
         self.bn_params = {
@@ -18,6 +20,10 @@ class BaseModel(object):
             "is_training": training
         }
         self.z_dim = z_dim
+        self.D_lr = D_lr
+        self.G_lr = G_lr
+        self.args = vars(self).copy() # dict
+
         if training == True:
             self._build_train_graph()
         else:

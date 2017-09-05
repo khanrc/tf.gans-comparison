@@ -7,9 +7,14 @@ from basemodel import BaseModel
 
 
 class BEGAN(BaseModel):
-    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=64, gamma=0.5):
+    def __init__(self, name, training, D_lr=1e-4, G_lr=1e-4, image_shape=[64, 64, 3], z_dim=64, gamma=0.5):
         self.gamma = gamma
-        super(BEGAN, self).__init__(name=name, training=training, image_shape=image_shape, z_dim=z_dim)
+        self.decay_step = 3000
+        self.decay_rate = 0.95
+        self.beta1 = 0.5
+        self.lambd_k = 0.001
+        self.nf = 128
+        super(BEGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -41,20 +46,19 @@ class BEGAN(BaseModel):
             # The authors suggest decaying learning rate by 0.5 when the convergence mesure stall
             # carpedm20 decays by 0.5 per 100000 steps
             # Heumi decays by 0.95 per 2000 steps (https://github.com/Heumi/BEGAN-tensorflow/)
-            st_lr = 1e-4
-            lr = tf.train.exponential_decay(st_lr, global_step, 3000, 0.95, staircase=True)
+            D_lr = tf.train.exponential_decay(self.D_lr, global_step, self.decay_step, self.decay_rate, staircase=True)
+            G_lr = tf.train.exponential_decay(self.G_lr, global_step, self.decay_step, self.decay_rate, staircase=True)
             with tf.variable_scope('D_train_op'):
                 with tf.control_dependencies(D_update_ops):
-                    D_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                    D_train_op = tf.train.AdamOptimizer(learning_rate=D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
             with tf.variable_scope('G_train_op'):
                 with tf.control_dependencies(G_update_ops):
-                    G_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                    G_train_op = tf.train.AdamOptimizer(learning_rate=G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # It should be ops `define` under control_dependencies
-            lambd_k = 0.001
             with tf.control_dependencies([D_train_op]): # should be iterable
                 with tf.variable_scope('update_k'):
-                    update_k = tf.assign(k, tf.clip_by_value(k + lambd_k * balance, 0., 1.)) # define
+                    update_k = tf.assign(k, tf.clip_by_value(k + self.lambd_k * balance, 0., 1.)) # define
             D_train_op = update_k # run op
 
             # summaries
@@ -67,11 +71,12 @@ class BEGAN(BaseModel):
                 tf.summary.scalar('convergence_measure', M),
                 tf.summary.scalar('balance', balance),
                 tf.summary.scalar('k', k),
-                tf.summary.scalar('lr', lr)
+                tf.summary.scalar('D_lr', D_lr),
+                tf.summary.scalar('G_lr', G_lr),
             ])
 
             # sparse-step summary
-            tf.summary.image('fake_sample', G, max_outputs=6)
+            tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
             # histogram all varibles
             # for var in tf.trainable_variables():
             #     tf.summary.histogram(var.op.name, var)
@@ -88,7 +93,7 @@ class BEGAN(BaseModel):
 
     def _encoder(self, X, reuse=False):
         with tf.variable_scope('encoder', reuse=reuse):
-            nf = 128
+            nf = self.nf
             nh = self.z_dim
 
             with slim.arg_scope([slim.conv2d], kernel_size=[3,3], padding='SAME', activation_fn=tf.nn.elu):
@@ -117,7 +122,7 @@ class BEGAN(BaseModel):
 
     def _decoder(self, h, reuse=False):
         with tf.variable_scope('decoder', reuse=reuse):
-            nf = 128
+            nf = self.nf
             nh = self.z_dim
 
             h0 = slim.fully_connected(h, 8*8*nf, activation_fn=None) # h0

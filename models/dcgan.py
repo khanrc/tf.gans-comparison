@@ -11,6 +11,10 @@ init - stddev 0.02
 '''
 
 class DCGAN(BaseModel):
+    def __init__(self, name, training, D_lr=2e-4, G_lr=2e-4, image_shape=[64, 64, 3], z_dim=100):
+        self.beta1 = 0.5
+        super(DCGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
@@ -33,10 +37,10 @@ class DCGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
                 # learning rate 2e-4/1e-3
-                G_train_op = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -48,7 +52,7 @@ class DCGAN(BaseModel):
             ])
 
             # sparse-step summary
-            tf.summary.image('fake_sample', G, max_outputs=8)
+            tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
             tf.summary.histogram('real_probs', D_real_prob)
             tf.summary.histogram('fake_probs', D_fake_prob)
             self.all_summary_op = tf.summary.merge_all()
@@ -60,7 +64,6 @@ class DCGAN(BaseModel):
             self.G_train_op = G_train_op
             self.fake_sample = G
             self.global_step = global_step
-
 
     def _discriminator(self, X, reuse=False):
         with tf.variable_scope('D', reuse=reuse):
@@ -82,7 +85,6 @@ class DCGAN(BaseModel):
             prob = tf.sigmoid(logits)
 
             return prob, logits
-
 
     def _generator(self, z, reuse=False):
         with tf.variable_scope('G', reuse=reuse):

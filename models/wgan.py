@@ -14,9 +14,12 @@ J = min WD (G_loss)
 '''
 
 class WGAN(BaseModel):
+    def __init__(self, name, training, D_lr=5e-5, G_lr=5e-5, image_shape=[64, 64, 3], z_dim=100):
+        self.ld = 10. # lambda
+        self.n_critic = 5
+        super(WGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+
     def _build_train_graph(self):
-        '''build computational graph for training
-        '''
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
@@ -39,12 +42,10 @@ class WGAN(BaseModel):
 
             # 사실 C 는 n_critic 번 학습시켜줘야 하는데 귀찮아서 그냥 러닝레이트로 때려박음 
             # 학습횟수를 건드리려면 train.py 를 수정해야해서...
-            n_critic = 5
-            lr = 0.00005
             with tf.control_dependencies(C_update_ops):
-                C_train_op = tf.train.RMSPropOptimizer(learning_rate=lr*n_critic).minimize(C_loss, var_list=C_vars)
+                C_train_op = tf.train.RMSPropOptimizer(learning_rate=self.D_lr*self.n_critic).minimize(C_loss, var_list=C_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.RMSPropOptimizer(learning_rate=lr).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.RMSPropOptimizer(learning_rate=self.G_lr).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # weight clipping
             '''
@@ -68,7 +69,7 @@ class WGAN(BaseModel):
             #     else:
             #         C_clips.append(tf.assign(var, tf.clip_by_value(var, -1.00, 1.00)))
 
-            print 'Weight clipping: {}'.format(C_clips)
+            # print 'Weight clipping: {}'.format(C_clips)
             with tf.control_dependencies([C_train_op]): # should be iterable
             	C_train_op = tf.tuple(C_clips) # tf.group can be better ...
 
@@ -81,7 +82,7 @@ class WGAN(BaseModel):
             ])
 
             # sparse-step summary
-            tf.summary.image('fake_sample', G, max_outputs=6)
+            tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
             # tf.summary.histogram('real_probs', D_real_prob)
             # tf.summary.histogram('fake_probs', D_fake_prob)
             self.all_summary_op = tf.summary.merge_all()

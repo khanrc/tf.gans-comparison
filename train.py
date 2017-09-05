@@ -17,7 +17,8 @@ def build_parser():
     models_str = ' / '.join(config.model_zoo)
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
     parser.add_argument('--name', help='default: name=model')
-    parser.add_argument('--renew', action='store_true', help='train model from scratch - clean saved checkpoints and summaries', default=False)
+    parser.add_argument('--renew', action='store_true', help='train model from scratch - \
+        clean saved checkpoints and summaries', default=False)
     # more arguments: dataset
 
     return parser
@@ -34,7 +35,7 @@ def sample_z(shape):
     return np.random.normal(size=shape)
 
 
-def train(input_op, num_epochs, batch_size, n_examples, renew=False):
+def train(model, input_op, num_epochs, batch_size, n_examples, renew=False):
     # n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
     # 1 epoch = 1583 steps
     print("\n# of examples: {}".format(n_examples))
@@ -43,8 +44,10 @@ def train(input_op, num_epochs, batch_size, n_examples, renew=False):
     summary_path = os.path.join('./summary/', model.name)
     ckpt_path = os.path.join('./checkpoints', model.name)
     if renew:
-        tf.gfile.DeleteRecursively(summary_path)
-        tf.gfile.DeleteRecursively(ckpt_path)
+        if os.path.exists(summary_path):
+            tf.gfile.DeleteRecursively(summary_path)
+        if os.path.exists(ckpt_path):
+            tf.gfile.DeleteRecursively(ckpt_path)
     if not os.path.exists(ckpt_path):
         tf.gfile.MakeDirs(ckpt_path)
 
@@ -58,11 +61,22 @@ def train(input_op, num_epochs, batch_size, n_examples, renew=False):
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
+        # https://github.com/tensorflow/tensorflow/issues/10972        
+        # TensorFlow 1.2 has much bugs for text summary
+        # make config_summary before define of summary_writer - bypass bug of tensorboard
+        
+        # It seems that batch_size should have been contained in the model config ... 
+        model_config_list = [[k, str(w)] for k, w in sorted(model.args.items()) + [('batch_size', batch_size)]]
+        model_config_summary_op = tf.summary.text('config', tf.convert_to_tensor(model_config_list), collections=[])
+        model_config_summary = sess.run(model_config_summary_op)
+
         summary_writer = tf.summary.FileWriter(summary_path, flush_secs=30, graph=sess.graph)
+        summary_writer.add_summary(model_config_summary)
         total_steps = int(np.ceil(n_examples * num_epochs / float(batch_size))) # total global step
         pbar = tqdm(total=total_steps, desc='global_step')
 
-        saver = tf.train.Saver(max_to_keep=100)
+
+        saver = tf.train.Saver(max_to_keep=1000) # save all checkpoints
         global_step = 0
 
         ckpt = tf.train.get_checkpoint_state(ckpt_path)
@@ -110,6 +124,8 @@ if __name__ == "__main__":
     config.pprint_args(FLAGS)
 
     # input pipeline
-    X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
+    X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, 
+        num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
     model = config.get_model(FLAGS.model, FLAGS.name, training=True)
-    train(input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, n_examples=n_examples, renew=FLAGS.renew)
+    train(model=model, input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, 
+        n_examples=n_examples, renew=FLAGS.renew)

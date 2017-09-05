@@ -10,9 +10,14 @@ DRAGAN 은 DCGAN + GP 느낌임.
 '''
 
 class DRAGAN(BaseModel):
+    def __init__(self, name, training, D_lr=1e-4, G_lr=1e-4, image_shape=[64, 64, 3], z_dim=100):
+        self.beta1 = 0.5
+        self.beta2 = 0.9
+        self.ld = 10. # lambda
+        self.C = 0.5
+        super(DRAGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+
     def _build_train_graph(self):
-        '''build computational graph for training
-        '''
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
@@ -30,14 +35,12 @@ class DRAGAN(BaseModel):
             # Gradient Penalty (GP)
             # perturbed minibatch: x_noise = x_i + noise_i
             # x_hat = alpha*x + (1-alpha)*x_noise = x_i + (1-alpha)*noise_i
-            ld = 10.
-            C = 0.5
 
             shape = tf.shape(X)
             eps = tf.random_uniform(shape=shape, minval=0., maxval=1.)
             x_mean, x_var = tf.nn.moments(X, axes=[0,1,2,3])
             x_std = tf.sqrt(x_var) # magnitude of noise decides the size of local region
-            noise = C*x_std*eps # delta in paper
+            noise = self.C*x_std*eps # delta in paper
             # perturbed minibatch: Xp = X + noise
 
             alpha = tf.random_uniform(shape=[shape[0], 1, 1, 1], minval=0., maxval=1.)
@@ -48,7 +51,7 @@ class DRAGAN(BaseModel):
             # tf.norm 함수가 좀 이상해서, axis 가 reduce_mean 처럼 작동하긴 하는데 3차원 이상 줄 수 없음. 따라서 아래처럼 flatten 을 활용함
             D_xhat_grad_norm = tf.norm(slim.flatten(D_xhat_grad), axis=1)  # l2 norm
             # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(D_xhat_prob), axis=[1,2,3])**0.5 - 1.)) # 이것도 맞음
-            GP = ld * tf.reduce_mean(tf.square(D_xhat_grad_norm - 1.))
+            GP = self.ld * tf.reduce_mean(tf.square(D_xhat_grad_norm - 1.))
             D_loss += GP
 
             D_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/discriminator/')
@@ -57,13 +60,12 @@ class DRAGAN(BaseModel):
             D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/discriminator/')
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/generator/')
 
-            lr = 1e-4
-            beta1 = 0.5
-            beta2 = 0.9
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1, beta2=beta2).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1, beta2=self.beta2).\
+                    minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=lr, beta1=beta1, beta2=beta2).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1, beta2=self.beta2).\
+                    minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -74,9 +76,9 @@ class DRAGAN(BaseModel):
             ])
 
             # sparse-step summary
-            tf.summary.image('fake_sample', G, max_outputs=6)
-            tf.summary.histogram('real_probs', D_real_prob)
-            tf.summary.histogram('fake_probs', D_fake_prob)
+            tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
+            # tf.summary.histogram('real_probs', D_real_prob)
+            # tf.summary.histogram('fake_probs', D_fake_prob)
             self.all_summary_op = tf.summary.merge_all()
 
             # accesible points

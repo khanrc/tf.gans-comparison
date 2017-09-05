@@ -7,7 +7,8 @@ from basemodel import BaseModel
 
 
 class EBGAN(BaseModel):
-    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=100, use_pt_regularizer=False, pt_weight=0.1, margin=20.):
+    def __init__(self, name, training, D_lr=1e-3, G_lr=1e-3, image_shape=[64, 64, 3], z_dim=100, 
+        use_pt_regularizer=False, pt_weight=0.1, margin=20.):
         '''
         pt_weight 만으로도 pt_reg 를 쓰냐 안쓰냐 조정할 수 있지만, 만약 안쓰면서도 pt_loss 를 체크해보고 싶은 경우를 위해
         use_pt_regularizer 를 따로 두었음.
@@ -17,7 +18,8 @@ class EBGAN(BaseModel):
         self.use_pt_regularizer = use_pt_regularizer
         self.pt_weight = pt_weight
         self.m = margin
-        super(EBGAN, self).__init__(name=name, training=training, image_shape=image_shape, z_dim=z_dim)
+        self.beta1 = 0.5
+        super(EBGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -44,9 +46,9 @@ class EBGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -60,7 +62,7 @@ class EBGAN(BaseModel):
             ])
 
             # sparse-step summary
-            tf.summary.image('fake_sample', G, max_outputs=6)
+            tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
             self.all_summary_op = tf.summary.merge_all()
 
             # accesible points

@@ -7,11 +7,11 @@ from basemodel import BaseModel
 
 
 class LSGAN(BaseModel):
-    def __init__(self, name, training, image_shape=[64, 64, 3], z_dim=1024, a=0., b=1., c=1.):
+    def __init__(self, name, training, D_lr=1e-3, G_lr=1e-3, image_shape=[64, 64, 3], z_dim=1024, a=0., b=1., c=1.):
         '''
         a: fake label
         b: real label
-        c: real label for G (G가 D를 속이고자 하는 값 - 보통은 real label)
+        c: real label for G (The value that G wants to deceive D - intuitively same as real label b) 
 
         Pearson chi-square divergence: a=-1, b=1, c=0.
         Intuitive (real label 1, fake label 0): a=0, b=c=1.
@@ -19,11 +19,9 @@ class LSGAN(BaseModel):
         self.a = a
         self.b = b
         self.c = c
-        super(LSGAN, self).__init__(name=name, training=training, image_shape=image_shape, z_dim=z_dim)
+        super(LSGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
-        '''build computational graph for training
-        ''' 
         with tf.variable_scope(self.name):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
@@ -77,10 +75,10 @@ class LSGAN(BaseModel):
 
             
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=0.5).minimize(D_loss, var_list=D_vars)
 
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -92,7 +90,7 @@ class LSGAN(BaseModel):
             ])
 
             # sparse-step summary
-            tf.summary.image('G/fake_sample', G, max_outputs=8)
+            tf.summary.image('G/fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
             tf.summary.histogram('D/real_value', D_real)
             tf.summary.histogram('D/fake_value', D_fake)
 
