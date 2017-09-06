@@ -49,17 +49,15 @@ The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
 
 ### DCGAN
 
-- 네트워크 구조가 가장 간단함
-- G 의 lr 을 조정했을 때 더 좋은 결과가 나옴
-  - 아마 더 디테일하게 조정하면 더 좋은 결과를 볼 수 있지 않을까 싶음
-  - https://ajolicoeur.wordpress.com/cats/ 에서는 5e-5 for D, 2e-4 for G 를 제안함 (for 64x64)
-
-DCGAN.origin vs. DCGAN.G1e-3
+- Simple networks
+- learning rate for discriminator (D_lr) is 2e-4
 
 |                G_lr=2e-4                 |                G_lr=1e-3                 |
 | :--------------------------------------: | :--------------------------------------: |
 |                   50k                    |                   30k                    |
 | ![dcgan.G2e-4.50k](assets/dcgan.G2e-4.50k.png) | ![dcgan.G1e-3.30k](assets/dcgan.G1e-3.30k.png) |
+
+Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_lr=2e-4 which is the same as the paper suggested. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate will bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
 
 G_lr 을 높게 주는 게 더 결과가 좋음. 대신 G 가 팡팡 튀어서 모델이 collapsed 되는 경우가 발생함. 위 프로젝트에서 제안한대로 G 를 높이는 게 아니라 D 를 낮추는 방식을 쓴다면 좀 더 안정적이면서 예쁜 모델을 학습할 수 있을 듯.
 
@@ -82,14 +80,13 @@ pt 를 쓴게 더 결과가 좋긴 함
 
 근데 pt 를 쓰는게 mode collapse 를 잡기 위함인데 그런 효과는 잘 모르겠음
 
+ebgan pt graph -
+
 
 ### LSGAN
 
-- 특이하게 LSGAN 에서는 z_dim 을 크게 씀: 1024
-- 오히려 z_dim=100 일때 결과가 더 좋았음 - 미세하게.
-
-LSGAN.100 vs. LSGAN.1024
-
+- Unusually, LSGAN used large dimension for latent space (z_dim)
+- But in my experiments, z_dim=100 makes better results than z_dim=1024 which is originally used in paper
 
 |                z_dim=100                 |                z_dim=1024                |
 | :--------------------------------------: | :--------------------------------------: |
@@ -99,13 +96,15 @@ LSGAN.100 vs. LSGAN.1024
 
 ### WGAN
 
-- 이론적인 논문이라서 결과가 엄청 좋지는 않음
-- 네트워크 구조도 특별히 제안하지 않음 => DCGAN architecture
+- Very theoretical paper, so the results are not remarkable
+- Also no specific network structure proposed, so DCGAN architecture was used for experiments
 
-|               30k                |
+|       DCGAN architecture         |
 | :------------------------------: |
+|               30k                |
 | ![wgan.30k](assets/wgan.30k.png) |
 
+w_dist?
 
 
 ### WGAN-GP
