@@ -1,4 +1,7 @@
-# Generative adversarial networks comparison without cherry-picking
+# GANs comparison without cherry-picking
+
+In this project, I implemented and compared some theoretical generative adversarial nets: DCGAN, EBGAN, LSGAN, WGAN, WGAN-GP, BEGAN, and DRAGAN. I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset.
+
 
 - 비슷한 레포가 몇개 있지만, 여기서는 최대한 논문의 구조를 그대로 구현하려 노력함
 - 물론 100% 그대로 재현한 건 아님. 디테일한 부분은 생략했고 - 예를들면 weight init - 논문에서 구조가 정확히 안 나온 부분 등은 임의로 구현함
@@ -12,37 +15,30 @@
 - flexible input shape
 - multiple results show on tensorboard 
 
-## 특징
+## Features
 
-- 논문의 구조를 그대로 구현하려 노력함
-- 약간의 실험은 하였으나 디테일한 hyperparams-tuning 은 하지 않음
-- tf queue runner 를 사용 (input pipeline)
-- 동일한 trainer 하에 model 만 바꿔가며 실험할 수 있도록 구조적으로 설계함
-    - 다만 설계에 실패한 듯… -.-;
-- 텐서보드를 최대한 활용함
-    - text summary 는 tf 1.2 에서 warning 을 냄 - tf bug
-    - 아마 tf 1.3 에선 괜찮을거라고 생각하지만 테스트해보진 않음
-    - 단 graph structure 는 별로 신경쓰지 않음 (scoping 신경 X)
+- Model structure is copied from each paper
+    - But some details are ignored
+    - I admit that a little details make great differences in the results due to the very unstable GAN training
+- Just done experiments for some questions, but not done tuning details
+- Well-structured project - is my goal at the start, but the result is not satisfactory :(
+    - TensorFlow queue runner is used for inpue pipeline
+    - Single trainer (and single evaluator) - multi model structure
+    - Logs in training and configuration are recorded on the TensorBoard
 
-### 유사 레포들
+### Similar works
 
-- 유사 레포들: [wiseodd/generative-models](https://github.com/wiseodd/generative-models), [hwalsuklee/tensorflow-generative-model-collections](https://github.com/hwalsuklee/tensorflow-generative-model-collections), [sanghoon/tf-exercise-gan](https://github.com/sanghoon/tf-exercise-gan), [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
-- 하지만 위 레포들은 논문에서 제안한 아키텍처를 그대로 쓰지 않고 전부 동일한 아키텍처를 사용함
-- 이렇게 하면 각 모델의 특성을 제대로 볼 수 없음
-- 따라서 여기서는 각 논문에서 제안한 모델을 최대한 구현함 - 디테일은 제외하고.
+- [wiseodd/generative-models](https://github.com/wiseodd/generative-models)
+- [hwalsuklee/tensorflow-generative-model-collections](https://github.com/hwalsuklee/tensorflow-generative-model-collections)
+- [sanghoon/tf-exercise-gan](https://github.com/sanghoon/tf-exercise-gan)
+- [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
+
+
 - https://ajolicoeur.wordpress.com/cats/
-    - 요것도 비슷한 작업임 - for cats, with tuning, pytorch.
-
-## Requirements
-
-- python 2.7
-- tensorflow 1.2
-- tqdm
-- (optional) pynvml - for auto gpu selection
 
 ## Models
 
-Conditional GAN 류는 포함하지 않음 (CGAN, acGAN, SGAN 등)
+The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
 
 - DCGAN
 - LSGAN
@@ -54,6 +50,11 @@ Conditional GAN 류는 포함하지 않음 (CGAN, acGAN, SGAN 등)
 
 ## Results
 
+- 실험은 전부 CelebA, 64x64 에 대해 수행됨
+- CelebA 데이터셋은 202599 개로 구성되어 있고, batch size = 128 로 돌리면 15.8k 스텝이 1epoch 임
+- 대부분 30k step (약 2epoch) 정도에서 수렴하였음. 여려 스텝에서의 샘플 결과를 보고 제일 좋은 걸 골라서 보여주는거임. (즉 G 를 pick 함. generated sample 을 pick 한 건 아니고.)
+- default batch size 128, z_dim 100 (from DCGAN)
+
 ### DCGAN
 
 - 네트워크 구조가 가장 간단함
@@ -62,6 +63,13 @@ Conditional GAN 류는 포함하지 않음 (CGAN, acGAN, SGAN 등)
   - https://ajolicoeur.wordpress.com/cats/ 에서는 5e-5 for D, 2e-4 for G 를 제안함 (for 64x64)
 
 DCGAN.origin vs. DCGAN.G1e-3
+
+|                G_lr=2e-4                 |                G_lr=1e-3                 |
+| :--------------------------------------: | :--------------------------------------: |
+|                   50k                    |                   30k                    |
+| ![dcgan.G2e-4.50k](assets/dcgan.G2e-4.50k.png) | ![dcgan.G1e-3.30k](assets/dcgan.G1e-3.30k.png) |
+
+G_lr 을 높게 주는 게 더 결과가 좋음. 대신 G 가 팡팡 튀어서 모델이 collapsed 되는 경우가 발생함. 위 프로젝트에서 제안한대로 G 를 높이는 게 아니라 D 를 낮추는 방식을 쓴다면 좀 더 안정적이면서 예쁜 모델을 학습할 수 있을 듯.
 
 ### EBGAN
 
@@ -72,6 +80,17 @@ DCGAN.origin vs. DCGAN.G1e-3
   - 나는 pt weight = 0 으로 하면 mode collapse 가 발생하고 pt regularizer 가 이를 방지할거라고 생각했으나 별로 그런 느낌이 없는듯함 
 
 ebgan.pt vs. ebgan.nopt
+|             pt weight = 0.1              |                No pt loss                |
+| :--------------------------------------: | :--------------------------------------: |
+|                   30k                    |                   30k                    |
+| ![ebgan.pt.30k](assets/ebgan.pt.30k.png) | ![ebgan.nopt.30k](assets/ebgan.nopt.30k.png) |
+
+pt 를 쓴게 더 결과가 좋긴 함
+
+근데 pt 를 쓰는게 mode collapse 를 잡기 위함인데 그런 효과는 잘 모르겠음
+
+
+
 
 ### LSGAN
 
@@ -79,13 +98,22 @@ ebgan.pt vs. ebgan.nopt
 - 오히려 z_dim=100 일때 결과가 더 좋았음
 
 LSGAN.100 vs. LSGAN.1024
+|                z_dim=100                 |                z_dim=1024                |
+| :--------------------------------------: | :--------------------------------------: |
+|                   30k                    |                   30k                    |
+| ![lsgan.100.30k](assets/lsgan.100.30k.png) | ![lsgan.1024.30k](assets/lsgan.1024.30k.png) |
+
 
 ### WGAN
 
 - 이론적인 논문이라서 결과가 엄청 좋지는 않음
-- 네트워크 구조도 특별히 제안하지 않음
+- 네트워크 구조도 특별히 제안하지 않음 => DCGAN architecture
 
-wgan.dcgan
+|               30k                |
+| :------------------------------: |
+| ![wgan.30k](assets/wgan.30k.png) |
+
+
 
 ### WGAN-GP
 
@@ -97,12 +125,37 @@ wgan.dcgan
 
 wgan-gp.dcgan vs. wgan-gp.resnet
 
+|            DCGAN architecture            |           ResNet architecture            |
+| :--------------------------------------: | :--------------------------------------: |
+|                   30k                    |           7k, batch size = 64            |
+| ![wgan-gp.dcgan.30k](assets/wgan-gp.dcgan.30k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) |
+
+
+
+wgan-gp.resnet 은 낮은 에퐄에서 좋은 결과를 보임
+
+|                    5k                    |                    7k                    |                   10k                    |                   15k                    |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
+| ![wgan-gp.good.5k](assets/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/wgan-gp.good.10k.png) | ![wgan-gp.good.15k](assets/wgan-gp.good.15k.png) |
+|                   20k                    |                   25k                    |                   30k                    |                   40k                    |
+| ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) | ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) |
+
+
+
 ### BEGAN
 
 - celebA 에 대해서는 결과가 좋음 (사람이 보기에)
   - optional improvement 부분은 구현하지 않았음에도!
 - 그러나 디테일이 없어지는듯한 느낌이 있음
 - Q. LSUN 등 다른 데이터셋에 대해서도 결과가 잘 나올까? - ToDo
+
+batch size = 16, z_dim=64
+
+|                30k                 |                50k                 |                75k                 |
+| :--------------------------------: | :--------------------------------: | :--------------------------------: |
+| ![began.30k](assets/began.30k.png) | ![began.50k](assets/began.50k.png) | ![began.75k](assets/began.75k.png) |
+
+
 
 ### DRAGAN
 
@@ -111,6 +164,12 @@ wgan-gp.dcgan vs. wgan-gp.resnet
 - 동일한 아키텍처인 DCGAN, WGAN, WGAN-GP 와 비교해봤을 때 결과가 좋음
 - 특히 WGAN-GP 와 알고리즘이 비슷 (WGAN-GP + DCGAN 느낌)
 - 논문에 따르면 WGAN-GP 는 restriction 이 너무 강하여 poor G 를 생성한다고 함
+
+|                 30k                  |
+| :----------------------------------: |
+| ![dragan.30k](assets/dragan.30k.png) |
+
+
 
 ## Conclusion
 
@@ -127,3 +186,11 @@ wgan-gp.dcgan vs. wgan-gp.resnet
   - 대신 tensorboard 에서 config text 를 볼 수 없음
   - 이는 텐서플로 버그로 아마 tensorflow 1.3 에서는 괜찮을거라고 생각함
 - eval
+
+### Requirements
+
+- python 2.7
+- tensorflow 1.2
+- tqdm
+- (optional) pynvml - for auto gpu selection
+
