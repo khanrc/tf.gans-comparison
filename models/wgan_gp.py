@@ -136,46 +136,37 @@ class WGAN_GP(BaseModel):
 
                 return net
 
-
     '''
     ResNet architecture from appendix C in the paper.
     https://github.com/igul222/improved_wgan_training/blob/master/gan_64x64.py - GoodGenerator / GoodDiscriminator
     layer norm in D, batch norm in G.
     some details are ignored in this implemenation.
     '''
-
     def _residual_block(self, X, nf_output, resample, kernel_size=[3,3], name='res_block'):
         with tf.variable_scope(name):
             input_shape = X.shape
             nf_input = input_shape[-1]
-            if resample == 'down':
-                # shortcut
-                with slim.arg_scope([slim.conv2d, slim.avg_pool2d], padding='SAME'):
-                    shortcut = slim.avg_pool2d(X, [2,2])
-                    shortcut = slim.conv2d(shortcut, nf_output, kernel_size=[1,1], activation_fn=None) # init xavier
+            if resample == 'down': # Downsample
+                shortcut = slim.avg_pool2d(X, [2,2])
+                shortcut = slim.conv2d(shortcut, nf_output, kernel_size=[1,1], activation_fn=None) # init xavier
 
-                    net = X
-                    net = slim.layer_norm(net, activation_fn=tf.nn.relu)
-                    net = slim.conv2d(net, nf_input, kernel_size=kernel_size, biases_initializer=None) # skip bias
-                    net = slim.layer_norm(net, activation_fn=tf.nn.relu)
-                    net = slim.conv2d(net, nf_output, kernel_size=kernel_size)
-                    net = slim.avg_pool2d(net, [2,2])
+                net = slim.layer_norm(X, activation_fn=tf.nn.relu)
+                net = slim.conv2d(net, nf_input, kernel_size=kernel_size, biases_initializer=None) # skip bias
+                net = slim.layer_norm(net, activation_fn=tf.nn.relu)
+                net = slim.conv2d(net, nf_output, kernel_size=kernel_size)
+                net = slim.avg_pool2d(net, [2,2])
 
                 return net + shortcut
-            elif resample == 'up':
-                with slim.arg_scope([slim.conv2d], padding='SAME'):
-                    # Upsample
+            elif resample == 'up': # Upsample
+                upsample_shape = map(lambda x: int(x)*2, input_shape[1:3])
+                shortcut = tf.image.resize_nearest_neighbor(X, upsample_shape) 
+                shortcut = slim.conv2d(shortcut, nf_output, kernel_size=[1,1], activation_fn=None)
 
-                    upsample_shape = map(lambda x: int(x)*2, input_shape[1:3])
-                    shortcut = tf.image.resize_nearest_neighbor(X, upsample_shape) 
-                    shortcut = slim.conv2d(shortcut, nf_output, kernel_size=[1,1], activation_fn=None)
-
-                    net = X
-                    net = slim.batch_norm(net, activation_fn=tf.nn.relu, **self.bn_params)
-                    net = tf.image.resize_nearest_neighbor(net, upsample_shape) 
-                    net = slim.conv2d(net, nf_output, kernel_size=kernel_size, biases_initializer=None) # skip bias
-                    net = slim.batch_norm(net, activation_fn=tf.nn.relu, **self.bn_params)
-                    net = slim.conv2d(net, nf_output, kernel_size=kernel_size)
+                net = slim.batch_norm(X, activation_fn=tf.nn.relu, **self.bn_params)
+                net = tf.image.resize_nearest_neighbor(net, upsample_shape) 
+                net = slim.conv2d(net, nf_output, kernel_size=kernel_size, biases_initializer=None) # skip bias
+                net = slim.batch_norm(net, activation_fn=tf.nn.relu, **self.bn_params)
+                net = slim.conv2d(net, nf_output, kernel_size=kernel_size)
 
                 return net + shortcut
             else:
@@ -197,7 +188,7 @@ class WGAN_GP(BaseModel):
 
             return net
 
-    # naming from wgan
+    # `critic` named from wgan
     def _good_critic(self, X, reuse=False):
         with tf.variable_scope('critic', reuse=reuse):
             nf = 64

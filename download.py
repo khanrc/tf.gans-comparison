@@ -1,15 +1,3 @@
-"""
-Burrowed from https://github.com/carpedm20/DCGAN-tensorflow/blob/master/download.py
-"""
-
-"""
-Modification of https://github.com/stanfordnlp/treelstm/blob/master/scripts/download.py
-Downloads the following:
-- Celeb-A dataset
-- LSUN dataset
-- MNIST dataset
-"""
-
 from __future__ import print_function
 import os
 import sys
@@ -22,6 +10,19 @@ import requests
 import subprocess
 from tqdm import tqdm
 from six.moves import urllib
+
+"""
+Burrowed from https://github.com/carpedm20/DCGAN-tensorflow/blob/master/download.py
+"""
+
+"""
+Modification of https://github.com/stanfordnlp/treelstm/blob/master/scripts/download.py
+Downloads the following:
+- Celeb-A dataset
+- LSUN dataset
+- MNIST dataset
+"""
+
 
 parser = argparse.ArgumentParser(description='Download dataset for DCGAN.')
 parser.add_argument('datasets', metavar='N', type=str, nargs='+', choices=['celebA', 'lsun', 'mnist'],

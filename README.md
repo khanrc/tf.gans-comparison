@@ -1,11 +1,9 @@
 # GANs comparison without cherry-picking
 
-In this project, I implemented and compared some theoretical generative adversarial nets: DCGAN, EBGAN, LSGAN, WGAN, WGAN-GP, BEGAN, and DRAGAN. I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset.
+Implementions of some theoretical generative adversarial nets: DCGAN, EBGAN, LSGAN, WGAN, WGAN-GP, BEGAN, and DRAGAN. 
 
+I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset.
 
-- 비슷한 레포가 몇개 있지만, 여기서는 최대한 논문의 구조를 그대로 구현하려 노력함
-- 물론 100% 그대로 재현한 건 아님. 디테일한 부분은 생략했고 - 예를들면 weight init - 논문에서 구조가 정확히 안 나온 부분 등은 임의로 구현함
-- 큰 구조는 동일하게 맞추었기는 하지만 GAN 이 파라메터에 민감하여 사소한 부분에서도 결과 차이가 날 수 있다는 점은 생각하고 볼 것
 
 [TOC]
 
@@ -13,6 +11,7 @@ In this project, I implemented and compared some theoretical generative adversar
 
 - LSUN dataset
 - flexible input shape
+- modulation of D/G networks
 - multiple results show on tensorboard 
 
 ## Features
@@ -21,22 +20,12 @@ In this project, I implemented and compared some theoretical generative adversar
     - But some details are ignored
     - I admit that a little details make great differences in the results due to the very unstable GAN training
 - Just done experiments for some questions, but not done tuning details
-- Well-structured project - is my goal at the start, but the result is not satisfactory :(
+- Well-structured - was my goal at the start, but the result is not satisfactory :(
     - TensorFlow queue runner is used for inpue pipeline
     - Single trainer (and single evaluator) - multi model structure
     - Logs in training and configuration are recorded on the TensorBoard
 
-### Similar works
-
-- [wiseodd/generative-models](https://github.com/wiseodd/generative-models)
-- [hwalsuklee/tensorflow-generative-model-collections](https://github.com/hwalsuklee/tensorflow-generative-model-collections)
-- [sanghoon/tf-exercise-gan](https://github.com/sanghoon/tf-exercise-gan)
-- [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
-- https://ajolicoeur.wordpress.com/cats/
-
 ## Models
-
-The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
 
 - DCGAN
 - LSGAN
@@ -46,7 +35,12 @@ The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
 - BEGAN
 - DRAGAN
 
+The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
+
 ## Results
+
+- 큰 구조는 동일하게 맞추었기는 하지만 GAN 이 파라메터에 민감하여 사소한 부분에서도 결과 차이가 날 수 있다는 점은 생각하고 볼 것
+- 물론 100% 그대로 재현한 건 아님. 디테일한 부분은 생략했고 - 예를들면 weight init - 논문에서 구조가 정확히 안 나온 부분 등은 임의로 구현함
 
 - 실험은 전부 CelebA, 64x64 에 대해 수행됨
 - CelebA 데이터셋은 202599 개로 구성되어 있고, batch size = 128 로 돌리면 15.8k 스텝이 1epoch 임
@@ -87,8 +81,6 @@ ebgan.pt vs. ebgan.nopt
 pt 를 쓴게 더 결과가 좋긴 함
 
 근데 pt 를 쓰는게 mode collapse 를 잡기 위함인데 그런 효과는 잘 모르겠음
-
-
 
 
 ### LSGAN
@@ -184,31 +176,30 @@ batch size = 16, z_dim=64
 
 ## Usage
 
-CelebA dataset 을 다운로드
+1. Download CelebA dataset
 ```
 $ python download.py celeba
 ```
-TFRecords format 으로 변경
+
+2. Convert images to tfrecords format
 ```
 $ python convert.py
 ```
-학습
+
+3. Train
 ```
 $ python train.py --model model --name name
 ```
-Tensorboard
 
+4. Monitor it with TensorBoard
 ```
 $ tensorboard --logdir=summary/name
 ```
 
-Evaluation
-
+5. Evaluate
 ```
 $ python eval.py --model model --name name
 ```
-
-
 
 ### Requirements
 
@@ -216,4 +207,13 @@ $ python eval.py --model model --name name
 - tensorflow 1.2
 - tqdm
 - (optional) pynvml - for auto gpu selection
+
+
+### Similar works
+
+- [wiseodd/generative-models](https://github.com/wiseodd/generative-models)
+- [hwalsuklee/tensorflow-generative-model-collections](https://github.com/hwalsuklee/tensorflow-generative-model-collections)
+- [sanghoon/tf-exercise-gan](https://github.com/sanghoon/tf-exercise-gan)
+- [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
+- https://ajolicoeur.wordpress.com/cats/
 
