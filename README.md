@@ -32,8 +32,6 @@ In this project, I implemented and compared some theoretical generative adversar
 - [hwalsuklee/tensorflow-generative-model-collections](https://github.com/hwalsuklee/tensorflow-generative-model-collections)
 - [sanghoon/tf-exercise-gan](https://github.com/sanghoon/tf-exercise-gan)
 - [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
-
-
 - https://ajolicoeur.wordpress.com/cats/
 
 ## Models
@@ -96,7 +94,7 @@ pt 를 쓴게 더 결과가 좋긴 함
 ### LSGAN
 
 - 특이하게 LSGAN 에서는 z_dim 을 크게 씀: 1024
-- 오히려 z_dim=100 일때 결과가 더 좋았음
+- 오히려 z_dim=100 일때 결과가 더 좋았음 - 미세하게.
 
 LSGAN.100 vs. LSGAN.1024
 
@@ -165,6 +163,7 @@ batch size = 16, z_dim=64
 - Game theory 에서의 접근이 굉장히 흥미로움
 - DCGAN architecture
 - 동일한 아키텍처인 DCGAN, WGAN, WGAN-GP 와 비교해봤을 때 결과가 좋음
+  - hyperparam tuning 한 DCGAN 과는 비슷한 느낌
 - 특히 WGAN-GP 와 알고리즘이 비슷 (WGAN-GP + DCGAN 느낌)
 - 논문에 따르면 WGAN-GP 는 restriction 이 너무 강하여 poor G 를 생성한다고 함
 
@@ -177,18 +176,39 @@ batch size = 16, z_dim=64
 ## Conclusion
 
 - BEGAN이 제일 인상적이긴 하나 LSUN 에서도 그럴지 궁금
+  - BEGAN 은 learning rate decay 등등 implementation 자체가 신경써서 되어 있기는함 - 즉 엔지니어링빨이라고 할수도
+  - 그렇다 쳐도 결과가 매우 인상적
 - DCGAN도 learning rate 을 잘 조절해주면 좋은 결과를 보임
+  - BEGAN 을 제외하고 제일 좋은 결과인 것 같기는 한데 다른 모델들은 tuning 을 전혀 안했기때문에 무조건 그렇다고 할 순 없음
 - DRAGAN 도 꽤나 인상적
 
 ## Usage
 
-- download
-- convert
-- train
-  - 만약 warning 을 보기 싫으면 text_summary 부분을 주석처리해주면 됨
-  - 대신 tensorboard 에서 config text 를 볼 수 없음
-  - 이는 텐서플로 버그로 아마 tensorflow 1.3 에서는 괜찮을거라고 생각함
-- eval
+CelebA dataset 을 다운로드
+```
+$ python download.py celeba
+```
+TFRecords format 으로 변경
+```
+$ python convert.py
+```
+학습
+```
+$ python train.py --model model --name name
+```
+Tensorboard
+
+```
+$ tensorboard --logdir=summary/name
+```
+
+Evaluation
+
+```
+$ python eval.py --model model --name name
+```
+
+
 
 ### Requirements
 

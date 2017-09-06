@@ -1,16 +1,7 @@
 from models import *
 
-'''
-DCGAN, LSGAN, WGAN, WGAN-GP, EBGAN, BEGAN, DRAGAN
 
-Optional:
-CramerGAN
-
-More:
-BGAN, MDGAN?
-'''
-
-model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'EBGAN', 'BEGAN', 'DRAGAN', 'PATCHGAN']
+model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'EBGAN', 'BEGAN', 'DRAGAN']
 
 def get_model(mtype, name, training):
     model = None
@@ -28,8 +19,6 @@ def get_model(mtype, name, training):
         model = began.BEGAN
     elif mtype == 'DRAGAN':
         model = dragan.DRAGAN
-    elif mtype == 'PATCHGAN':
-        model = patchgan.PatchGAN
     else:
         assert False, mtype + ' is not in the model zoo'
 

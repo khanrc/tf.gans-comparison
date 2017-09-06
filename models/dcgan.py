@@ -13,7 +13,8 @@ init - stddev 0.02
 class DCGAN(BaseModel):
     def __init__(self, name, training, D_lr=2e-4, G_lr=2e-4, image_shape=[64, 64, 3], z_dim=100):
         self.beta1 = 0.5
-        super(DCGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+        super(DCGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
+            image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -37,10 +38,12 @@ class DCGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).\
+                    minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
                 # learning rate 2e-4/1e-3
-                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).\
+                    minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -92,8 +95,8 @@ class DCGAN(BaseModel):
             net = slim.fully_connected(net, 4*4*1024, activation_fn=tf.nn.relu)
             net = tf.reshape(net, [-1, 4, 4, 1024])
 
-            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=tf.nn.relu, 
-                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
+            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, padding='SAME', 
+                activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
                 net = slim.conv2d_transpose(net, 512)
                 expected_shape(net, [8, 8, 512])
                 net = slim.conv2d_transpose(net, 256)

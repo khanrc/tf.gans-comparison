@@ -19,6 +19,7 @@ class LSGAN(BaseModel):
         self.a = a
         self.b = b
         self.c = c
+        self.beta1 = 0.5
         super(LSGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
@@ -31,7 +32,6 @@ class LSGAN(BaseModel):
             D_real = self._discriminator(X)
             D_fake = self._discriminator(G, reuse=True)
 
-            # l2_loss: 0.5 * reduce_sum(v ** 2)
             D_loss_real = 0.5 * tf.reduce_mean(tf.square(D_real - self.b)) # self.b
             D_loss_fake = 0.5 * tf.reduce_mean(tf.square(D_fake - self.a)) # self.a
             D_loss = D_loss_real + D_loss_fake
@@ -42,43 +42,12 @@ class LSGAN(BaseModel):
 
             D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/D/')
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
-
-            '''
-            참고 - 요렇게 슬림으로도 가능함 (summarize_gradients, update_ops)
-            D_train_op = slim.learning.create_train_op(D_loss, tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5), update_ops=D_update_ops,
-                                                       variables_to_train=D_vars, summarize_gradients=True)
-            '''
-
-            # 논문에 따르면 scene (LSUN) data 에 대해서 0.001 로 했다고 되어 있음.
-            # D_optim = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5)
-            # G_optim = tf.train.AdamOptimizer(learning_rate=0.001, beta1=0.5)
-            # # D_optim = tf.train.RMSPropOptimizer(learning_rate=0.0002)
-            # # G_optim = tf.train.RMSPropOptimizer(learning_rate=0.002)
-
-            # with tf.control_dependencies(D_update_ops):
-            #     D_grads = D_optim.compute_gradients(D_loss, var_list=D_vars)
-
-            # with tf.control_dependencies(G_update_ops):
-            #     G_grads = G_optim.compute_gradients(G_loss, var_list=G_vars)
-
-            # # # histogram all varibles
-            # # for var in tf.trainable_variables():
-            # #     tf.summary.histogram(var.op.name, var)
-
-            # # # histogram all gradients
-            # # for grad, var in D_grads + G_grads:
-            # #     # if grad is not None:
-            # #     tf.summary.histogram(var.op.name + '/gradients', grad)
-
-            # D_train_op = D_optim.apply_gradients(D_grads, global_step=global_step)
-            # G_train_op = G_optim.apply_gradients(G_grads)
-
             
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=0.5).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
 
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=0.5).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary

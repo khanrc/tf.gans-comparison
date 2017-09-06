@@ -13,7 +13,7 @@ WD = max_f [ Ex[f(x)] - Ez[f(g(z))] ] where f has K-Lipschitz constraint
 J = min WD (G_loss)
 
 + GP:
-Instead of weight clipping, gradient penalty is proposed.
+Instead of weight clipping, WGAN-GP proposed gradient penalty.
 real x 와 fake y 간에 선을 그으면, x_t = (1-t)x + ty 가 된다.
 이 x_t 에 대한 Optimal critic D* 의 gradient = (y-x_t) / ||y-x_t|| 라고 함 (appendix 참조).
 이 크기는 1 이므로, 이에 따라 페널티를 준다.
@@ -37,7 +37,6 @@ class WGAN_GP(BaseModel):
             C_real = self._critic(X)
             C_fake = self._critic(G, reuse=True)
 
-            # reduce_mean!
             W_dist = tf.reduce_mean(C_real - C_fake) # maximize
             C_loss = -W_dist # minimize
             G_loss = tf.reduce_mean(-C_fake)
@@ -47,9 +46,7 @@ class WGAN_GP(BaseModel):
             x_hat = eps*X + (1.-eps)*G 
             C_xhat = self._critic(x_hat, reuse=True)
             C_xhat_grad = tf.gradients(C_xhat, x_hat)[0] # gradient of D(x_hat)
-            # tf.norm 함수가 좀 이상해서, axis 가 reduce_mean 처럼 작동하긴 하는데 3차원 이상 줄 수 없음. 따라서 아래처럼 flatten 을 활용함
             C_xhat_grad_norm = tf.norm(slim.flatten(C_xhat_grad), axis=1)  # l2 norm
-            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(C_xhat), axis=[1,2,3])**0.5 - 1.)) # 이것도 맞음
             GP = self.ld * tf.reduce_mean(tf.square(C_xhat_grad_norm - 1.))
             C_loss += GP
 
@@ -59,10 +56,6 @@ class WGAN_GP(BaseModel):
             C_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/critic/')
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/generator/')
 
-            # 사실 C 는 n_critic 번 학습시켜줘야 하는데 귀찮아서 그냥 러닝레이트로 때려박음 
-            # 학습횟수를 건드리려면 train.py 를 수정해야해서...
-            # lr=1e-4, beta1=0. : ref code
-            # colocate_gradients_with_ops 는 모지
             n_critic = 5
             lr = 1e-4
             with tf.control_dependencies(C_update_ops):
@@ -104,7 +97,7 @@ class WGAN_GP(BaseModel):
     def _dcgan_critic(self, X, reuse=False):
     	'''
     	K-Lipschitz function.
-    	WGAN-GP 에서는 critic 에서 BN 을 사용하지 않는다.
+    	WGAN-GP does not use critic in batch norm.
     	'''
         with tf.variable_scope('critic', reuse=reuse):
             net = X
@@ -145,24 +138,11 @@ class WGAN_GP(BaseModel):
 
 
     '''
-    ResNet architecture
-    논문에서는 CIFAR-10/LSUN 데이터에 대해 ResNet architecture 를 제안함 - appendix C.
-    pre-activation residual block 을 사용함
+    ResNet architecture from appendix C in the paper.
     https://github.com/igul222/improved_wgan_training/blob/master/gan_64x64.py - GoodGenerator / GoodDiscriminator
-    D 에서는 LN, G 에서는 BN. 
-    he/xavier 는 따로 구분하지 않음.
-
-    checks:
-    - resize_nearest_neighbor + conv vs. deconv
-        checkerboard artifact?
-        똑같지 않나?
+    layer norm in D, batch norm in G.
+    some details are ignored in this implemenation.
     '''
-
-    # 이거 resize_nearest_neighbor 랑 똑같음;;
-    def _upsample(self, X):
-        net = tf.concat([X, X, X, X], axis=-1) # channel last
-        net = tf.depth_to_space(net, 2)
-        return net
 
     def _residual_block(self, X, nf_output, resample, kernel_size=[3,3], name='res_block'):
         with tf.variable_scope(name):

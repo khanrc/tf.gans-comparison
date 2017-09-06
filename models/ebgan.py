@@ -10,10 +10,8 @@ class EBGAN(BaseModel):
     def __init__(self, name, training, D_lr=1e-3, G_lr=1e-3, image_shape=[64, 64, 3], z_dim=100, 
         use_pt_regularizer=False, pt_weight=0.1, margin=20.):
         '''
-        pt_weight 만으로도 pt_reg 를 쓰냐 안쓰냐 조정할 수 있지만, 만약 안쓰면서도 pt_loss 를 체크해보고 싶은 경우를 위해
-        use_pt_regularizer 를 따로 두었음.
-
-        pt_weight 와 margin 의 default 값은 논문에 나온 celebA 최적값임. pt_weight 은 크게 중요하지 않은 것 같고, margin 은 상당히 데이터에 민감한 듯.
+        use_pt_regularizer argument can be replaced by pt_weight=0.
+        The default value of pt_weight and margin is from the paper for celebA.
         '''
         self.use_pt_regularizer = use_pt_regularizer
         self.pt_weight = pt_weight

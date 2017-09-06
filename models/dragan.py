@@ -6,7 +6,8 @@ import ops
 from basemodel import BaseModel
 
 '''
-DRAGAN 은 DCGAN + GP 느낌임.
+DRAGAN has similar gradient penalty to WGAN-GP, although different motivation.
+It is also similar to DCGAN except for gradient penalty.
 '''
 
 class DRAGAN(BaseModel):
@@ -48,9 +49,8 @@ class DRAGAN(BaseModel):
 
             D_xhat_prob, D_xhat_logits = self._discriminator(xhat, reuse=True)
             D_xhat_grad = tf.gradients(D_xhat_prob, xhat)[0] # gradient of D(x_hat)
-            # tf.norm 함수가 좀 이상해서, axis 가 reduce_mean 처럼 작동하긴 하는데 3차원 이상 줄 수 없음. 따라서 아래처럼 flatten 을 활용함
             D_xhat_grad_norm = tf.norm(slim.flatten(D_xhat_grad), axis=1)  # l2 norm
-            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(D_xhat_prob), axis=[1,2,3])**0.5 - 1.)) # 이것도 맞음
+            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(D_xhat_prob), axis=[1,2,3])**0.5 - 1.)) # works same
             GP = self.ld * tf.reduce_mean(tf.square(D_xhat_grad_norm - 1.))
             D_loss += GP
 
@@ -90,6 +90,7 @@ class DRAGAN(BaseModel):
             self.global_step = global_step
 
     # DRAGAN does not use BN
+    # DCGAN architecture
     def _discriminator(self, X, reuse=False):
         with tf.variable_scope('discriminator', reuse=reuse):
             net = X

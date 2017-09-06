@@ -29,7 +29,6 @@ class WGAN(BaseModel):
             C_real = self._critic(X)
             C_fake = self._critic(G, reuse=True)
 
-            # reduce_mean!
             W_dist = tf.reduce_mean(C_real - C_fake) # maximize
             C_loss = -W_dist # minimize
             G_loss = tf.reduce_mean(-C_fake)
@@ -40,8 +39,8 @@ class WGAN(BaseModel):
             C_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/critic/')
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/generator/')
 
-            # 사실 C 는 n_critic 번 학습시켜줘야 하는데 귀찮아서 그냥 러닝레이트로 때려박음 
-            # 학습횟수를 건드리려면 train.py 를 수정해야해서...
+            # In the paper, critic networks has been trained n_critic times for each training step.
+            # Here I adjust learning rate instead.
             with tf.control_dependencies(C_update_ops):
                 C_train_op = tf.train.RMSPropOptimizer(learning_rate=self.D_lr*self.n_critic).minimize(C_loss, var_list=C_vars)
             with tf.control_dependencies(G_update_ops):
@@ -49,19 +48,17 @@ class WGAN(BaseModel):
 
             # weight clipping
             '''
-            이 때 웨이트 클리핑은 자동으로 실행이 안 되니 control dependency 를 설정해주거나
-            group_op 로 묶어주거나 둘중 하나를 해야 할 듯
-            Q. batch_norm parameter 도 clip 해줘야 하나?
-            베타는 해 주는게 맞는 것 같은데, 감마는 좀 이상한데...? 
-            => 대부분의 구현체들이 감마도 하고 있는 것 같음. 일단 해준다.
+            It is right that clips gamma of the batch_norm?
+            It's not important for theory ...
             '''
-            # print 'C_vars: {}'.format(C_vars)
-            # ver 1. 대부분의 구현체
+            
+            # ver 1. clips all variables in critic
             C_clips = [tf.assign(var, tf.clip_by_value(var, -0.01, 0.01)) for var in C_vars] # with gamma
-            # ver 2. 이건 안 됨
+
+            # ver 2. does not work
             # C_clips = [tf.assign(var, tf.clip_by_value(var, -0.01, 0.01)) for var in C_vars if 'gamma' not in var.op.name] # without gamma
 
-            # ver 3. 이건 되긴 하는데 흠... 잘모르겠음 
+            # ver 3. works but strange
             # C_clips = []
             # for var in C_vars:
             #     if 'gamma' not in var.op.name:
@@ -69,9 +66,8 @@ class WGAN(BaseModel):
             #     else:
             #         C_clips.append(tf.assign(var, tf.clip_by_value(var, -1.00, 1.00)))
 
-            # print 'Weight clipping: {}'.format(C_clips)
             with tf.control_dependencies([C_train_op]): # should be iterable
-            	C_train_op = tf.tuple(C_clips) # tf.group can be better ...
+            	C_train_op = tf.tuple(C_clips) # tf.group ?
 
             # summaries
             # per-step summary
@@ -90,18 +86,13 @@ class WGAN(BaseModel):
             # accesible points
             self.X = X
             self.z = z
-            self.D_train_op = C_train_op # train.py 와의 accesibility 를 위해... 흠... 구린데...
+            self.D_train_op = C_train_op # compatibility for train.py
             self.G_train_op = G_train_op
             self.fake_sample = G
             self.global_step = global_step
 
     def _critic(self, X, reuse=False):
-    	'''
-    	K-Lipschitz function.
-    	확인해봐야겠지만 K-Lipschitz function 을 근사하는 함수고, 
-    	Lipschitz constraint 는 weight clipping 으로 걸어주니 
-    	짐작컨대 그냥 linear 값을 추정하면 될 것 같음.
-    	'''
+    	''' K-Lipschitz function '''
         with tf.variable_scope('critic', reuse=reuse):
             net = X
             

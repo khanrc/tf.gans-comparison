@@ -14,7 +14,8 @@ class BEGAN(BaseModel):
         self.beta1 = 0.5
         self.lambd_k = 0.001
         self.nf = 128
-        super(BEGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+        super(BEGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
+            image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -50,10 +51,12 @@ class BEGAN(BaseModel):
             G_lr = tf.train.exponential_decay(self.G_lr, global_step, self.decay_step, self.decay_rate, staircase=True)
             with tf.variable_scope('D_train_op'):
                 with tf.control_dependencies(D_update_ops):
-                    D_train_op = tf.train.AdamOptimizer(learning_rate=D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
+                    D_train_op = tf.train.AdamOptimizer(learning_rate=D_lr, beta1=self.beta1).\
+                        minimize(D_loss, var_list=D_vars)
             with tf.variable_scope('G_train_op'):
                 with tf.control_dependencies(G_update_ops):
-                    G_train_op = tf.train.AdamOptimizer(learning_rate=G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                    G_train_op = tf.train.AdamOptimizer(learning_rate=G_lr, beta1=self.beta1).\
+                        minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # It should be ops `define` under control_dependencies
             with tf.control_dependencies([D_train_op]): # should be iterable
