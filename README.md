@@ -12,14 +12,14 @@ I implemented the structure of model equal to the structure in paper and compare
 - LSUN dataset
 - flexible input shape
 - modulation of D/G networks
-- multiple results show on tensorboard 
+- Other models - CramerGAN, GoGAN
 
 ## Features
 
 - Model structure is copied from each paper
     - But some details are ignored
     - I admit that a little details make great differences in the results due to the very unstable GAN training
-- Just done experiments for some questions, but not done tuning details
+- No hard tuning for each model - so the results can be improved
 - Well-structured - was my goal at the start, but the result is not satisfactory :(
     - TensorFlow queue runner is used for inpue pipeline
     - Single trainer (and single evaluator) - multi model structure
@@ -37,29 +37,33 @@ I implemented the structure of model equal to the structure in paper and compare
 
 The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
 
+## Dataset 
+
+### CelebA
+
+http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
+
+- All experiments were performed on 64x64 CelebA dataset
+- The dataset has 202599 images
+- 1 epoch consists of about 15.8k iterations for batch size 128
+
 ## Results
 
-- 큰 구조는 동일하게 맞추었기는 하지만 GAN 이 파라메터에 민감하여 사소한 부분에서도 결과 차이가 날 수 있다는 점은 생각하고 볼 것
-- 물론 100% 그대로 재현한 건 아님. 디테일한 부분은 생략했고 - 예를들면 weight init - 논문에서 구조가 정확히 안 나온 부분 등은 임의로 구현함
-
-- 실험은 전부 CelebA, 64x64 에 대해 수행됨
-- CelebA 데이터셋은 202599 개로 구성되어 있고, batch size = 128 로 돌리면 15.8k 스텝이 1epoch 임
-- 대부분 30k step (약 2epoch) 정도에서 수렴하였음. 여려 스텝에서의 샘플 결과를 보고 제일 좋은 걸 골라서 보여주는거임. (즉 G 를 pick 함. generated sample 을 pick 한 건 아니고.)
-- default batch size 128, z_dim 100 (from DCGAN)
+- I implemented the same as the proposed model in each paper, but ignored some details (or the paper did not describe details of model)
+  - For example, I used all weight initialization as default which is xavier init
+- Default batch_size=128 and z_dim=100 (from DCGAN)
 
 ### DCGAN
 
 - Simple networks
-- learning rate for discriminator (D_lr) is 2e-4
+- Learning rate for discriminator (D_lr) is 2e-4
 
 |                G_lr=2e-4                 |                G_lr=1e-3                 |
 | :--------------------------------------: | :--------------------------------------: |
 |                   50k                    |                   30k                    |
 | ![dcgan.G2e-4.50k](assets/dcgan.G2e-4.50k.png) | ![dcgan.G1e-3.30k](assets/dcgan.G1e-3.30k.png) |
 
-Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_lr=2e-4 which is the same as the paper suggested. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate will bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
-
-G_lr 을 높게 주는 게 더 결과가 좋음. 대신 G 가 팡팡 튀어서 모델이 collapsed 되는 경우가 발생함. 위 프로젝트에서 제안한대로 G 를 높이는 게 아니라 D 를 낮추는 방식을 쓴다면 좀 더 안정적이면서 예쁜 모델을 학습할 수 있을 듯.
+Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_lr=2e-4 which is the same as the paper suggested. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate can bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
 
 ### EBGAN
 
@@ -80,8 +84,16 @@ pt 를 쓴게 더 결과가 좋긴 함
 
 근데 pt 를 쓰는게 mode collapse 를 잡기 위함인데 그런 효과는 잘 모르겠음
 
-ebgan pt graph -
 
+|             pt weight = 0.1              |                No pt loss                |
+| :--------------------------------------: | :--------------------------------------: |
+| ![ebgan.pt.graph](assets/ebgan.pt.graph.png) | ![ebgan.nopt.graph](assets/ebgan.nopt.graph.png) |
+
+pt loss 를 쓰는 경우 pt_loss 가 조금 더 빠르게 줄어들기는 하나 큰 차이가 나지 않고 결국 비슷하게 됨
+
+pt loss 를 쓰지 않아도 pt 값이 똑같이 줄어든다는 점이 재미있음
+
+위 샘플 퀄리티를 보면 pt_loss 를 쓰면 더 좋아지는것 같기는 하지만 실제로 역할이 있는지는 의문임
 
 ### LSGAN
 
@@ -99,12 +111,12 @@ ebgan pt graph -
 - Very theoretical paper, so the results are not remarkable
 - Also no specific network structure proposed, so DCGAN architecture was used for experiments
 
-|       DCGAN architecture         |
-| :------------------------------: |
-|               30k                |
-| ![wgan.30k](assets/wgan.30k.png) |
 
-w_dist?
+|               30k                |               W distance               |
+| :------------------------------: | :------------------------------------: |
+| ![wgan.30k](assets/wgan.30k.png) | ![wgan.w_dist](assets/wgan.w_dist.png) |
+
+
 
 
 ### WGAN-GP
@@ -114,6 +126,8 @@ w_dist?
   - 특이한 점은 굉장히 빨리 수렴하고 더 학습하면 결과가 나빠짐
   - skip-connection 의 영향으로 보임
 - DRAGAN 논문에서는 WGAN(-GP) 의 constraint 가 너무 restrict 해서 poor G 를 학습한다고 함
+- wgan-gp 는 에퐄이 올라가면 얼굴이 뭉개지는 현상이 있는데, 이는 w_dist 가 예쁘게 떨어지는 것과 상반됨
+  - Q. 왤까?
 
 wgan-gp.dcgan vs. wgan-gp.resnet
 
@@ -122,16 +136,31 @@ wgan-gp.dcgan vs. wgan-gp.resnet
 |                   30k                    |           7k, batch size = 64            |
 | ![wgan-gp.dcgan.30k](assets/wgan-gp.dcgan.30k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) |
 
+wgan-gp.dcgan 은 에퐄이 올라가면 얼굴이 뭉개지는 현상이 있음
+
+|                   10k                    |                   20k                    |                   30k                    |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
+| ![wgan-gp.dcgan.10k](assets/wgan-gp.dcgan.10k.png) | ![wgan-gp.dcgan.20k](assets/wgan-gp.dcgan.20k.png) | ![wgan-gp.dcgan.30k](assets/wgan-gp.dcgan.30k.png) |
 
 
-wgan-gp.resnet 은 낮은 에퐄에서 좋은 결과를 보임
+wgan-gp.resnet 도 비슷함
 
-|                    5k                    |                    7k                    |                   10k                    |                   15k                    |
-| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
-| ![wgan-gp.good.5k](assets/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/wgan-gp.good.10k.png) | ![wgan-gp.good.15k](assets/wgan-gp.good.15k.png) |
-|                   20k                    |                   25k                    |                   30k                    |                   40k                    |
-| ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) | ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) |
+|                    5k                    |                    7k                    |                   10k                    |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
+| ![wgan-gp.good.5k](assets/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/wgan-gp.good.10k.png) |
+|                   15k                    |                   20k                    |                   25k                    |
+| ![wgan-gp.good.15k](assets/wgan-gp.good.15k.png) | ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) |
+|                   30k                    |                   40k                    |                   50k                    |
+| ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) | ![wgan-gp.good.50k](assets/wgan-gp.good.50k.png) |
 
+그래프는 이쁘게 떨어짐
+
+|            DCGAN architecture            |           ResNet architecture            |
+| :--------------------------------------: | :--------------------------------------: |
+| ![wgan-gp.dcgan.w_dist](assets/wgan-gp.dcgan.w_dist.png) | ![wgan-gp.good.w_dist](assets/wgan-gp.good.w_dist.png) |
+| ![wgan-gp.dcgan.w_dist.expand](assets/wgan-gp.dcgan.w_dist.expand.png) | ![wgan-gp.good.w_dist.expand](assets/wgan-gp.good.w_dist.expand.png) |
+
+W_dist < 0 이 되는게 흥미로운데, discriminator 를 generator 가 압도하고 있다고 볼 수 있음. E[fake] > E[real]. n_critic 을 늘려야 하나?
 
 
 ### BEGAN
@@ -141,11 +170,15 @@ wgan-gp.resnet 은 낮은 에퐄에서 좋은 결과를 보임
 - 그러나 디테일이 없어지는듯한 느낌이 있음
 - Q. LSUN 등 다른 데이터셋에 대해서도 결과가 잘 나올까? - ToDo
 
-batch size = 16, z_dim=64
+batch size = 16, z_dim=64, gamma=0.5
 
 |                30k                 |                50k                 |                75k                 |
 | :--------------------------------: | :--------------------------------: | :--------------------------------: |
 | ![began.30k](assets/began.30k.png) | ![began.50k](assets/began.50k.png) | ![began.75k](assets/began.75k.png) |
+
+|     Convergence measure M      |
+| :----------------------------: |
+| ![began.M](assets/began.M.png) |
 
 
 
@@ -158,8 +191,9 @@ batch size = 16, z_dim=64
 - 특히 WGAN-GP 와 알고리즘이 비슷 (WGAN-GP + DCGAN 느낌)
 - 논문에 따르면 WGAN-GP 는 restriction 이 너무 강하여 poor G 를 생성한다고 함
 
-|                 30k                  |
+|          DCGAN architecture          |
 | :----------------------------------: |
+|                 30k                  |
 | ![dragan.30k](assets/dragan.30k.png) |
 
 
@@ -175,27 +209,32 @@ batch size = 16, z_dim=64
 
 ## Usage
 
-1. Download CelebA dataset
+Download CelebA dataset:
+
 ```
 $ python download.py celeba
 ```
 
-2. Convert images to tfrecords format
+Convert images to tfrecords format:
+
 ```
 $ python convert.py
 ```
 
-3. Train
+Train:
+
 ```
 $ python train.py --model model --name name
 ```
 
-4. Monitor it with TensorBoard
+Monitor through TensorBoard:
+
 ```
 $ tensorboard --logdir=summary/name
 ```
 
-5. Evaluate
+Evaluate:
+
 ```
 $ python eval.py --model model --name name
 ```
