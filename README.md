@@ -97,7 +97,7 @@ pt loss 를 쓰지 않아도 pt 값이 똑같이 줄어든다는 점이 재미�
 
 ### LSGAN
 
-- Unusually, LSGAN used large dimension for latent space (z_dim)
+- Unusually, LSGAN used large dimension for latent space (z_dim=1024)
 - But in my experiments, z_dim=100 makes better results than z_dim=1024 which is originally used in paper
 
 |                z_dim=100                 |                z_dim=1024                |
@@ -108,15 +108,12 @@ pt loss 를 쓰지 않아도 pt 값이 똑같이 줄어든다는 점이 재미�
 
 ### WGAN
 
-- Very theoretical paper, so the results are not remarkable
+- Very theoretical paper, so the results are not impressive (the theory is very impressive!)
 - Also no specific network structure proposed, so DCGAN architecture was used for experiments
-
 
 |               30k                |               W distance               |
 | :------------------------------: | :------------------------------------: |
 | ![wgan.30k](assets/wgan.30k.png) | ![wgan.w_dist](assets/wgan.w_dist.png) |
-
-
 
 
 ### WGAN-GP
