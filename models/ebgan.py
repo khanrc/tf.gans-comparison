@@ -8,12 +8,8 @@ from basemodel import BaseModel
 
 class EBGAN(BaseModel):
     def __init__(self, name, training, D_lr=1e-3, G_lr=1e-3, image_shape=[64, 64, 3], z_dim=100, 
-        use_pt_regularizer=False, pt_weight=0.1, margin=20.):
-        '''
-        use_pt_regularizer argument can be replaced by pt_weight=0.
-        The default value of pt_weight and margin is from the paper for celebA.
-        '''
-        self.use_pt_regularizer = use_pt_regularizer
+        pt_weight=0.0, margin=20.):
+        ''' The default value of pt_weight and margin is taken from the paper for celebA. '''
         self.pt_weight = pt_weight
         self.m = margin
         self.beta1 = 0.5
@@ -26,16 +22,15 @@ class EBGAN(BaseModel):
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
             G = self._generator(z)
-            # mse is energy
             D_real_latent, D_real_energy = self._discriminator(X)
             D_fake_latent, D_fake_energy = self._discriminator(G, reuse=True)
 
             D_fake_hinge = tf.maximum(0., self.m - D_fake_energy) # hinge_loss
             D_loss = D_real_energy + D_fake_hinge
             G_loss = D_fake_energy
-            pt_loss = self.pt_weight * self.pt_regularizer(D_fake_latent) # pt_loss
-            if self.use_pt_regularizer:
-                G_loss += pt_loss
+            PT = self.pt_regularizer(D_fake_latent)
+            pt_loss = self.pt_weight * PT
+            G_loss += pt_loss
 
             D_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/D/')
             G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/G/')
@@ -44,15 +39,18 @@ class EBGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
 
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).\
+                    minimize(D_loss, var_list=D_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).\
+                    minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
             self.summary_op = tf.summary.merge([
                 tf.summary.scalar('G_loss', G_loss),
                 tf.summary.scalar('D_loss', D_loss),
+                tf.summary.scalar('PT', PT),
                 tf.summary.scalar('pt_loss', pt_loss),
                 tf.summary.scalar('D_energy/real', D_real_energy),
                 tf.summary.scalar('D_energy/fake', D_fake_energy),
@@ -100,8 +98,8 @@ class EBGAN(BaseModel):
             net = slim.fully_connected(net, 4*4*1024, activation_fn=tf.nn.relu)
             net = tf.reshape(net, [-1, 4, 4, 1024])
 
-            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[4,4], stride=2, padding='SAME', activation_fn=tf.nn.relu, 
-                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
+            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[4,4], stride=2, padding='SAME', 
+                activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
                 net = slim.conv2d_transpose(net, 512)
                 expected_shape(net, [8, 8, 512])
                 net = slim.conv2d_transpose(net, 256)
