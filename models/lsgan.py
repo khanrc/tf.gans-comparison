@@ -20,7 +20,8 @@ class LSGAN(BaseModel):
         self.b = b
         self.c = c
         self.beta1 = 0.5
-        super(LSGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+        super(LSGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
+            image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -44,10 +45,12 @@ class LSGAN(BaseModel):
             G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/G/')
             
             with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).minimize(D_loss, var_list=D_vars)
+                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1).\
+                    minimize(D_loss, var_list=D_vars)
 
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1).\
+                    minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -78,7 +81,8 @@ class LSGAN(BaseModel):
             net = X
             
             with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu, 
-                                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
+                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
+            
                 net = slim.conv2d(net, 64, normalizer_fn=None)
                 expected_shape(net, [32, 32, 64])
                 net = slim.conv2d(net, 128)
@@ -98,11 +102,13 @@ class LSGAN(BaseModel):
     def _generator(self, z, reuse=False):
         with tf.variable_scope('G', reuse=reuse):
             net = z
-            net = slim.fully_connected(net, 4*4*256, activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params)
+            net = slim.fully_connected(net, 4*4*256, activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm, 
+                normalizer_params=self.bn_params)
             net = tf.reshape(net, [-1, 4, 4, 256])
 
             with slim.arg_scope([slim.conv2d_transpose], kernel_size=[3,3], padding='SAME', activation_fn=tf.nn.relu, 
-                                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
+                normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
+
                 net = slim.conv2d_transpose(net, 256, stride=2)
                 net = slim.conv2d_transpose(net, 256, stride=1)
                 expected_shape(net, [8, 8, 256])

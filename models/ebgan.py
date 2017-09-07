@@ -13,7 +13,8 @@ class EBGAN(BaseModel):
         self.pt_weight = pt_weight
         self.m = margin
         self.beta1 = 0.5
-        super(EBGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+        super(EBGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
+            image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):

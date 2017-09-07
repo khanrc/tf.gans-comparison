@@ -7,13 +7,6 @@ I implemented the structure of model equal to the structure in paper and compare
 
 [TOC]
 
-## ToDo
-
-- LSUN dataset
-- flexible input shape
-- modulation of D/G networks
-- Other models - CramerGAN, GoGAN
-
 ## Features
 
 - Model structure is copied from each paper
@@ -55,7 +48,7 @@ http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
 
 ### DCGAN
 
-- Simple networks
+- Relatively simple networks
 - Learning rate for discriminator (D_lr) is 2e-4
 
 |                G_lr=2e-4                 |                G_lr=1e-3                 |
@@ -67,33 +60,29 @@ Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_
 
 ### EBGAN
 
-- 개인적으로 좋아하는 논문 - energy concept 이 매력적
-- 다만 딱히 energy-based 라고 할만한 점이 없다는 비판도 있긴 함
-- 아무튼 결과는 꽤 괜찮음 
-- pt regularizer 의 효용에 대해 좀 의문이 있음 (weight=0 으로 줘도 점점 줄어듬)
-  - 나는 pt weight = 0 으로 하면 mode collapse 가 발생하고 pt regularizer 가 이를 방지할거라고 생각했으나 별로 그런 느낌이 없는듯함 
+- I like energy concept, so this paper also very interesting
+  - But EBGAN is not a more energy-based model: [Are Energy-Based GANs any more energy-based than normal GANs?](http://www.inference.vc/are-energy-based-gans-actually-energy-based/)
 
-ebgan.pt vs. ebgan.nopt
+
+- Anyway, the energy concept and autoencoder based loss function are impressive personally, and the results are also good
+- But I have a question for Pulling-away Term (PT), which prevents mode-collapse
+- Theoretically, the role of PT is to prevent mode-collapse
+
+
 
 |             pt weight = 0.1              |                No pt loss                |
 | :--------------------------------------: | :--------------------------------------: |
 |                   30k                    |                   30k                    |
 | ![ebgan.pt.30k](assets/ebgan.pt.30k.png) | ![ebgan.nopt.30k](assets/ebgan.nopt.30k.png) |
 
-pt 를 쓴게 더 결과가 좋긴 함
-
-근데 pt 를 쓰는게 mode collapse 를 잡기 위함인데 그런 효과는 잘 모르겠음
+The model using PT generates slightly better sample visually. However, the results does not seem to prevent mode-collapse.
 
 
 |             pt weight = 0.1              |                No pt loss                |
 | :--------------------------------------: | :--------------------------------------: |
 | ![ebgan.pt.graph](assets/ebgan.pt.graph.png) | ![ebgan.nopt.graph](assets/ebgan.nopt.graph.png) |
 
-pt loss 를 쓰는 경우 pt_loss 가 조금 더 빠르게 줄어들기는 하나 큰 차이가 나지 않고 결국 비슷하게 됨
-
-pt loss 를 쓰지 않아도 pt 값이 똑같이 줄어든다는 점이 재미있음
-
-위 샘플 퀄리티를 보면 pt_loss 를 쓰면 더 좋아지는것 같기는 하지만 실제로 역할이 있는지는 의문임
+pt_loss decreases faster in the left which used pt_weight=0.1 but there is no big difference and even at the end the right which used no pt_loss has a lower pt_loss. So I wonder: what is real role of PT loss?
 
 ### LSGAN
 
@@ -108,7 +97,7 @@ pt loss 를 쓰지 않아도 pt 값이 똑같이 줄어든다는 점이 재미�
 
 ### WGAN
 
-- Very theoretical paper, so the results are not impressive (the theory is very impressive!)
+- WGAN is very theoretical paper, so the results are not impressive (but the theory is very impressive!)
 - Also no specific network structure proposed, so DCGAN architecture was used for experiments
 
 |               30k                |               W distance               |
@@ -118,7 +107,8 @@ pt loss 를 쓰지 않아도 pt 값이 똑같이 줄어든다는 점이 재미�
 
 ### WGAN-GP
 
-- DCGAN architecture / appendix C 의 ResNet architecture
+- I tried two network architectures, which are DCGAN architecture and ResNet architecture in appendx C
+- ResNet has more complicated architecture and better performance than DCGAN architecture
 - resnet 결과가 더 좋은데 기대만큼의 성능향상이 나오지는 않음
   - 특이한 점은 굉장히 빨리 수렴하고 더 학습하면 결과가 나빠짐
   - skip-connection 의 영향으로 보임
@@ -142,13 +132,11 @@ wgan-gp.dcgan 은 에퐄이 올라가면 얼굴이 뭉개지는 현상이 있음
 
 wgan-gp.resnet 도 비슷함
 
-|                    5k                    |                    7k                    |                   10k                    |
-| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
-| ![wgan-gp.good.5k](assets/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/wgan-gp.good.10k.png) |
-|                   15k                    |                   20k                    |                   25k                    |
-| ![wgan-gp.good.15k](assets/wgan-gp.good.15k.png) | ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) |
-|                   30k                    |                   40k                    |                   50k                    |
-| ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) | ![wgan-gp.good.50k](assets/wgan-gp.good.50k.png) |
+|                    5k                    |                    7k                    |                   10k                    |                   15k                    |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
+| ![wgan-gp.good.5k](assets/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/wgan-gp.good.10k.png) | ![wgan-gp.good.15k](assets/wgan-gp.good.15k.png) |
+|                   20k                    |                   25k                    |                   30k                    |                   40k                    |
+| ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) | ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) |
 
 그래프는 이쁘게 떨어짐
 
@@ -221,7 +209,24 @@ $ python convert.py
 Train:
 
 ```
-$ python train.py --model model --name name
+$ python train.py --help
+usage: train.py [-h] [--num_epochs NUM_EPOCHS] [--batch_size BATCH_SIZE]
+                [--num_threads NUM_THREADS] --model MODEL [--name NAME]
+                [--renew]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --num_epochs NUM_EPOCHS
+                        default: 20
+  --batch_size BATCH_SIZE
+                        default: 128
+  --num_threads NUM_THREADS
+                        # of data read threads (default: 4)
+  --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
+                        DRAGAN
+  --name NAME           default: name=model
+  --renew               train model from scratch - clean saved checkpoints and
+                        summaries
 ```
 
 Monitor through TensorBoard:
@@ -230,10 +235,16 @@ Monitor through TensorBoard:
 $ tensorboard --logdir=summary/name
 ```
 
-Evaluate:
+Evaluate (generate fake samples):
 
 ```
-$ python eval.py --model model --name name
+$ python eval.py --help
+usage: eval.py [-h] --model MODEL [--name NAME]
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --model MODEL  DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN / DRAGAN
+  --name NAME    default: name=model
 ```
 
 ### Requirements
@@ -252,3 +263,10 @@ $ python eval.py --model model --name name
 - [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
 - https://ajolicoeur.wordpress.com/cats/
 
+
+## ToDo
+
+- LSUN dataset
+- flexible input shape
+- modulation of D/G networks
+- Other models - CramerGAN, GoGAN, etc ...

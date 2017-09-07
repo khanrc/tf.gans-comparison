@@ -17,7 +17,8 @@ class WGAN(BaseModel):
     def __init__(self, name, training, D_lr=5e-5, G_lr=5e-5, image_shape=[64, 64, 3], z_dim=100):
         self.ld = 10. # lambda
         self.n_critic = 5
-        super(WGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+        super(WGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
+            image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -42,15 +43,14 @@ class WGAN(BaseModel):
             # In the paper, critic networks has been trained n_critic times for each training step.
             # Here I adjust learning rate instead.
             with tf.control_dependencies(C_update_ops):
-                C_train_op = tf.train.RMSPropOptimizer(learning_rate=self.D_lr*self.n_critic).minimize(C_loss, var_list=C_vars)
+                C_train_op = tf.train.RMSPropOptimizer(learning_rate=self.D_lr*self.n_critic).\
+                    minimize(C_loss, var_list=C_vars)
             with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.RMSPropOptimizer(learning_rate=self.G_lr).minimize(G_loss, var_list=G_vars, global_step=global_step)
+                G_train_op = tf.train.RMSPropOptimizer(learning_rate=self.G_lr).\
+                    minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # weight clipping
-            '''
-            It is right that clips gamma of the batch_norm?
-            It's not important for theory ...
-            '''
+            ''' It is right that clips gamma of the batch_norm? '''
             
             # ver 1. clips all variables in critic
             C_clips = [tf.assign(var, tf.clip_by_value(var, -0.01, 0.01)) for var in C_vars] # with gamma
@@ -96,7 +96,7 @@ class WGAN(BaseModel):
         with tf.variable_scope('critic', reuse=reuse):
             net = X
             
-            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu, 
+            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, activation_fn=ops.lrelu, 
                 normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
                 net = slim.conv2d(net, 64, normalizer_fn=None)
                 expected_shape(net, [32, 32, 64])
@@ -118,7 +118,7 @@ class WGAN(BaseModel):
             net = slim.fully_connected(net, 4*4*1024, activation_fn=tf.nn.relu)
             net = tf.reshape(net, [-1, 4, 4, 1024])
 
-            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=tf.nn.relu, 
+            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, activation_fn=tf.nn.relu, 
                 normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
                 net = slim.conv2d_transpose(net, 512)
                 expected_shape(net, [8, 8, 512])

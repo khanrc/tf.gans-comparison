@@ -16,7 +16,8 @@ class DRAGAN(BaseModel):
         self.beta2 = 0.9
         self.ld = 10. # lambda
         self.C = 0.5
-        super(DRAGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, image_shape=image_shape, z_dim=z_dim)
+        super(DRAGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
+            image_shape=image_shape, z_dim=z_dim)
 
     def _build_train_graph(self):
         with tf.variable_scope(self.name):
@@ -42,15 +43,13 @@ class DRAGAN(BaseModel):
             x_mean, x_var = tf.nn.moments(X, axes=[0,1,2,3])
             x_std = tf.sqrt(x_var) # magnitude of noise decides the size of local region
             noise = self.C*x_std*eps # delta in paper
-            # perturbed minibatch: Xp = X + noise
-
             alpha = tf.random_uniform(shape=[shape[0], 1, 1, 1], minval=0., maxval=1.)
             xhat = X + alpha*noise
 
             D_xhat_prob, D_xhat_logits = self._discriminator(xhat, reuse=True)
             D_xhat_grad = tf.gradients(D_xhat_prob, xhat)[0] # gradient of D(x_hat)
             D_xhat_grad_norm = tf.norm(slim.flatten(D_xhat_grad), axis=1)  # l2 norm
-            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(D_xhat_prob), axis=[1,2,3])**0.5 - 1.)) # works same
+            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(D_xhat_prob), axis=[1,2,3])**0.5 - 1.))
             GP = self.ld * tf.reduce_mean(tf.square(D_xhat_grad_norm - 1.))
             D_loss += GP
 
@@ -95,7 +94,7 @@ class DRAGAN(BaseModel):
         with tf.variable_scope('discriminator', reuse=reuse):
             net = X
             
-            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu):
+            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, activation_fn=ops.lrelu):
                 net = slim.conv2d(net, 64)
                 expected_shape(net, [32, 32, 64])
                 net = slim.conv2d(net, 128)
@@ -117,7 +116,7 @@ class DRAGAN(BaseModel):
             net = slim.fully_connected(net, 4*4*1024, activation_fn=tf.nn.relu)
             net = tf.reshape(net, [-1, 4, 4, 1024])
 
-            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=tf.nn.relu):
+            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, activation_fn=tf.nn.relu):
                 net = slim.conv2d_transpose(net, 512)
                 expected_shape(net, [8, 8, 512])
                 net = slim.conv2d_transpose(net, 256)
