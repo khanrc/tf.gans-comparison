@@ -57,7 +57,7 @@ The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
 |                   50k                    |                   30k                    |
 | ![dcgan.G2e-4.50k](assets/dcgan.G2e-4.50k.png) | ![dcgan.G1e-3.30k](assets/dcgan.G1e-3.30k.png) |
 
-Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_lr=2e-4 which is the same as the paper suggested. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate will bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
+Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_lr=2e-4 which is the same as the paper suggested. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate will bring stability like https://ajolicoeur.wordpress.com/cats/ in which used D_lr=5e-5 and G_lr=2e-4.
 
 G_lr 을 높게 주는 게 더 결과가 좋음. 대신 G 가 팡팡 튀어서 모델이 collapsed 되는 경우가 발생함. 위 프로젝트에서 제안한대로 G 를 높이는 게 아니라 D 를 낮추는 방식을 쓴다면 좀 더 안정적이면서 예쁜 모델을 학습할 수 있을 듯.
 
@@ -85,7 +85,7 @@ ebgan pt graph -
 
 ### LSGAN
 
-- Unusually, LSGAN used large dimension for latent space (z_dim)
+- Unusually, LSGAN used large dimension for latent space (z_dim=1024)
 - But in my experiments, z_dim=100 makes better results than z_dim=1024 which is originally used in paper
 
 |                z_dim=100                 |                z_dim=1024                |
@@ -96,7 +96,7 @@ ebgan pt graph -
 
 ### WGAN
 
-- Very theoretical paper, so the results are not remarkable
+- Very theoretical paper, so the results are not impressive (the theory is very impressive!)
 - Also no specific network structure proposed, so DCGAN architecture was used for experiments
 
 |       DCGAN architecture         |
@@ -104,7 +104,7 @@ ebgan pt graph -
 |               30k                |
 | ![wgan.30k](assets/wgan.30k.png) |
 
-w_dist?
+w_dist graph? (convergence measure)
 
 
 ### WGAN-GP
