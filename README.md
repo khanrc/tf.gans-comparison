@@ -7,28 +7,23 @@ I implemented the structure of model equal to the structure in paper and compare
 
 ## Table of Contents
 
- * [GANs comparison without cherry-picking](#gans-comparison-without-cherry-picking)
-    * [Table of Contents](#table-of-contents)
-    * [Features](#features)
-    * [Models](#models)
-    * [Dataset](#dataset)
-       * [CelebA](#celeba)
-    * [Results](#results)
-       * [DCGAN](#dcgan)
-       * [EBGAN](#ebgan)
-       * [LSGAN](#lsgan)
-       * [WGAN](#wgan)
-       * [WGAN-GP](#wgan-gp)
-          * [Face collapse phenomenon](#face-collapse-phenomenon)
-             * [DCGAN architecture](#dcgan-architecture)
-             * [ResNet architecture](#resnet-architecture)
-       * [BEGAN](#began)
-       * [DRAGAN](#dragan)
-    * [Conclusion](#conclusion)
-    * [Usage](#usage)
-       * [Requirements](#requirements)
-    * [Similar works](#similar-works)
-    * [ToDo](#todo)
+* [Features](#features)
+* [Models](#models)
+* [Dataset](#dataset)
+   * [CelebA](#celeba)
+* [Results](#results)
+   * [DCGAN](#dcgan)
+   * [EBGAN](#ebgan)
+   * [LSGAN](#lsgan)
+   * [WGAN](#wgan)
+   * [WGAN-GP](#wgan-gp)
+   * [BEGAN](#began)
+   * [DRAGAN](#dragan)
+* [Conclusion](#conclusion)
+* [Usage](#usage)
+   * [Requirements](#requirements)
+* [Similar works](#similar-works)
+* [ToDo](#todo)
 
 
 ## Features
@@ -153,14 +148,14 @@ Gulrajani, Ishaan, et al. "Improved training of wasserstein gans." arXiv preprin
 
 Especially WGAN-GP was collapsed much in the samples when the iteration increased.
 
-##### DCGAN architecture
+**DCGAN architecture**
 
 |                   10k                    |                   20k                    |                   30k                    |
 | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
 | ![wgan-gp.dcgan.10k](assets/wgan-gp.dcgan.10k.png) | ![wgan-gp.dcgan.20k](assets/wgan-gp.dcgan.20k.png) | ![wgan-gp.dcgan.30k](assets/wgan-gp.dcgan.30k.png) |
 
 
-##### ResNet architecture
+**ResNet architecture**
 
 ResNet architecture showed the best visual quality sample in the very early stage, 7k iteration in my criteria. This maybe due to the residual architecture.
 
@@ -302,7 +297,6 @@ optional arguments:
 
 ## ToDo
 
-- LSUN dataset
-- flexible input shape
-- modulation of D/G networks
-- Other interesting models - CramerGAN, GoGAN, etc ...
+- Other dataset - LSUN, cats, ...
+- Flexible input shape
+- Other interesting models - CramerGAN, GoGAN, ...
