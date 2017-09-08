@@ -6,17 +6,12 @@ import ops
 from basemodel import BaseModel
 
 '''
-based on DCGAN.
-
 WGAN:
 WD = max_f [ Ex[f(x)] - Ez[f(g(z))] ] where f has K-Lipschitz constraint
 J = min WD (G_loss)
 
 + GP:
 Instead of weight clipping, WGAN-GP proposed gradient penalty.
-real x 와 fake y 간에 선을 그으면, x_t = (1-t)x + ty 가 된다.
-이 x_t 에 대한 Optimal critic D* 의 gradient = (y-x_t) / ||y-x_t|| 라고 함 (appendix 참조).
-이 크기는 1 이므로, 이에 따라 페널티를 준다.
 '''
 
 class WGAN_GP(BaseModel):

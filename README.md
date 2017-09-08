@@ -86,7 +86,7 @@ Zhao, Junbo, Michael Mathieu, and Yann LeCun. "Energy-based generative adversari
 - I like energy concept, so this paper is very interesting
   - But there is a criticism that EBGAN is not a more energy-based model: [Are Energy-Based GANs any more energy-based than normal GANs?](http://www.inference.vc/are-energy-based-gans-actually-energy-based/)
 - Anyway, the energy concept and autoencoder based loss function are very impressive, and the results are also good
-- But I have a question for Pulling-away Term (PT), which prevents mode-collapse. This is the same idea with minibatch discrimination.
+- But I have a question for Pulling-away Term (PT), which prevents mode-collapse. This is the same idea with minibatch discrimination (T. Salimans et al. Improved techniques for training gans, NIPS 2016).
 - Theoretically, the role of PT is to prevent mode-collapse
 
 

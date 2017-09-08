@@ -35,9 +35,8 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 		tfrecords_prefix += '-'
 
 	if tf.gfile.Exists(target_dir):
-		# print("{} is Already exists".format(target_dir))
-		# return
-		pass
+		print("{} is Already exists".format(target_dir))
+		return
 	else:
 		tf.gfile.MakeDirs(target_dir)
 
@@ -46,13 +45,12 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 	for ext in exts:
 		pattern = '*.' + ext if ext != '' else '*'
 		path = os.path.join(source_dir, pattern)
-		print path
 		path_list.extend(glob.glob(path))
 
 	# shuffle path_list
 	np.random.shuffle(path_list)
 	num_files = len(path_list)
-	num_per_shard = num_files // num_shards # 마지막 샤드는 더 많음
+	num_per_shard = num_files // num_shards # Last shard will have more files
 
 	print('# of files: {}'.format(num_files))
 	print('# of shards: {}'.format(num_shards))

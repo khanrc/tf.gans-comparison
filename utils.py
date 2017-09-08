@@ -1,8 +1,5 @@
 # coding: utf-8
-# check python `logging` module
 import tensorflow as tf
-# import warnings
-
 '''https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
 Matplotlib chooses Xwindows backend by default. You need to set matplotlib do not use Xwindows backend.
 - `matplotlib.use('Agg')`
@@ -16,7 +13,6 @@ import matplotlib.gridspec as gridspec
 import scipy.misc
 import numpy as np
 
-# warnings.simplefilter('error')
 
 def get_best_gpu():
     '''Dependency: pynvml (for gpu memory informations)
@@ -25,10 +21,10 @@ def get_best_gpu():
     try:
         from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlDeviceGetMemoryInfo
     except Exception, e:
-        print '[!] {} => Use default GPU settings ...\n'.format(e)
+        print('[!] {} => Use default GPU settings ...\n'.format(e))
         return ''
 
-    print '\n===== Check GPU memory ====='
+    print('\n===== Check GPU memory =====')
 
     # byte to megabyte
     def to_mb(x):
@@ -54,8 +50,8 @@ def get_best_gpu():
             best_free = free
             best_idx = i
 
-    print '\nSelected GPU is gpu:{}'.format(best_idx)
-    print '============================\n'
+    print('\nSelected GPU is gpu:{}'.format(best_idx))
+    print('============================\n')
 
     return best_idx
 

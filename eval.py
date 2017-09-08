@@ -75,7 +75,6 @@ def eval(model, name, sample_shape=[4,4], load_all_ckpt=True):
             fn = "{:0>5d}.png".format(global_step)
             scipy.misc.imsave(os.path.join(dir_name, fn), merged_samples)
 
-
 '''
 You can create a gif movie through imagemagick on the commandline:
 $ convert -delay 20 eval/* movie.gif
@@ -88,7 +87,6 @@ $ convert -delay 20 eval/* movie.gif
 
 #     # make_gif(images, dir_name + '/movie.gif', duration=10, true_image=True)
 #     imageio.mimsave('movie.gif', images, duration=0.2)
-
 
 if __name__ == "__main__":
     parser = build_parser()
