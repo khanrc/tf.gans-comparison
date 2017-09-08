@@ -5,14 +5,36 @@ Implementations of some theoretical generative adversarial nets: DCGAN, EBGAN, L
 I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset.
 
 
-[TOC]
+## Table of Contents
+
+ * [GANs comparison without cherry-picking](#gans-comparison-without-cherry-picking)
+    * [Table of Contents](#table-of-contents)
+    * [Features](#features)
+    * [Models](#models)
+    * [Dataset](#dataset)
+       * [CelebA](#celeba)
+    * [Results](#results)
+       * [DCGAN](#dcgan)
+       * [EBGAN](#ebgan)
+       * [LSGAN](#lsgan)
+       * [WGAN](#wgan)
+       * [WGAN-GP](#wgan-gp)
+          * [Face collapse phenomenon](#face-collapse-phenomenon)
+             * [DCGAN architecture](#dcgan-architecture)
+             * [ResNet architecture](#resnet-architecture)
+       * [BEGAN](#began)
+       * [DRAGAN](#dragan)
+    * [Conclusion](#conclusion)
+    * [Usage](#usage)
+       * [Requirements](#requirements)
+    * [Similar works](#similar-works)
+    * [ToDo](#todo)
+
 
 ## Features
 
-- Model structure is copied from each paper
-    - But some details are ignored
-    - Granted, a little details make great differences in the results due to the very unstable GAN training
-- No hard tuning for each model - so the results can be improved
+- Model architectures are same as the architectures proposed in each paper
+- Each model was not much tuned, so the results can be improved
 - Well-structured - was my goal at the start, but the result is not satisfactory :(
     - TensorFlow queue runner is used for input pipeline
     - Single trainer (and single evaluator) - multi model structure
@@ -43,7 +65,8 @@ http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
 ## Results
 
 - I implemented the same as the proposed model in each paper, but ignored some details (or the paper did not describe details of model)
-  - For example, I used all weight initialization as default which is xavier init
+  - Granted, a little details make great differences in the results due to the very unstable GAN training
+  - So if you had a better results, let me know the settings 🙂
 - Default batch_size=128 and z_dim=100 (from DCGAN)
 
 ### DCGAN
@@ -85,7 +108,7 @@ The model using PT generates slightly better sample visually. However, the resul
 | :--------------------------------------: | :--------------------------------------: |
 | ![ebgan.pt.graph](assets/ebgan.pt.graph.png) | ![ebgan.nopt.graph](assets/ebgan.nopt.graph.png) |
 
-pt_loss decreases a little faster in the left which used pt_weight=0.1 but there is no big difference and even at the end the right which used no pt_loss has a lower pt_loss. So I wonder: is the PT loss really working in the same way as theory?
+pt_loss decreases a little faster in the left which used pt_weight=0.1 but there is no big difference and even at the end the right which used no pt_loss showed a lower pt_loss. So I wonder: is the PT loss really working for preventing mode-collapse as described in the paper?
 
 ### LSGAN
 
@@ -203,7 +226,7 @@ Kodali, Naveen, et al. "How to Train Your DRAGAN." arXiv preprint arXiv:1705.072
 - The results from WGAN and WGAN-GP were not as impressive as its beautiful theory
 - Personally, DRAGAN and EBGAN suggested highly interesting perspective
 - It is difficult to rank models except BEGAN due to the lack of quantitative measure. The visual quality of generated samples from each model seemed similar
-- Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality (except for BEGAN)
+- Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality (except for BEGAN) 🤔🤔
 
 
 ## Usage
