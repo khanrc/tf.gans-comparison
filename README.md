@@ -29,7 +29,7 @@ I implemented the structure of model equal to the structure in paper and compare
 
 - Model architectures are same as the architectures proposed in each paper
 - Each model was not much tuned, so the results can be improved
-- Well-structured - was my goal at the start, but the result is not satisfactory :(
+- Well-structured (was my goal at the start, but I don't know whether it succeed!)
     - TensorFlow queue runner is used for input pipeline
     - Single trainer (and single evaluator) - multi model structure
     - Logs in training and configuration are recorded on the TensorBoard
@@ -44,7 +44,7 @@ I implemented the structure of model equal to the structure in paper and compare
 - BEGAN
 - DRAGAN
 
-The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on).
+The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on). 
 
 ## Dataset 
 
@@ -77,16 +77,16 @@ Radford, Alec, Luke Metz, and Soumith Chintala. "Unsupervised representation lea
 
 Second row (50k, 30k) indicates each training iteration.
 
-Higher learning rate for generator makes better results. I used G_lr=1e-3 and D_lr=2e-4 which is the same as the paper suggested. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate can bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
+Higher learning rate (1e-3) for generator made better results. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate may bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
 
 ### EBGAN
 
 Zhao, Junbo, Michael Mathieu, and Yann LeCun. "Energy-based generative adversarial network." arXiv preprint arXiv:1609.03126 (2016).
 
-- I like energy concept, so this paper is very interesting
-  - But there is a criticism that EBGAN is not a more energy-based model: [Are Energy-Based GANs any more energy-based than normal GANs?](http://www.inference.vc/are-energy-based-gans-actually-energy-based/)
+- I like energy concept, so this paper is very interesting for me :)
+  - But there is criticism: [Are Energy-Based GANs any more energy-based than normal GANs?](http://www.inference.vc/are-energy-based-gans-actually-energy-based/)
 - Anyway, the energy concept and autoencoder based loss function are very impressive, and the results are also good
-- But I have a question for Pulling-away Term (PT), which prevents mode-collapse. This is the same idea with minibatch discrimination (T. Salimans et al. Improved techniques for training gans, NIPS 2016).
+- But I have a question for Pulling-away Term (PT), which prevents mode-collapse. This is the same idea as minibatch discrimination (T. Salimans et al).
 - Theoretically, the role of PT is to prevent mode-collapse
 
 
