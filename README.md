@@ -85,9 +85,8 @@ Zhao, Junbo, Michael Mathieu, and Yann LeCun. "Energy-based generative adversari
 
 - I like energy concept, so this paper is very interesting for me :)
   - But there is criticism: [Are Energy-Based GANs any more energy-based than normal GANs?](http://www.inference.vc/are-energy-based-gans-actually-energy-based/)
-- Anyway, the energy concept and autoencoder based loss function are very impressive, and the results are also good
-- But I have a question for Pulling-away Term (PT), which prevents mode-collapse. This is the same idea as minibatch discrimination (T. Salimans et al).
-- Theoretically, the role of PT is to prevent mode-collapse
+- Anyway, the energy concept and autoencoder based loss function are impressive, and the results are also fine
+- But I have a question for Pulling-away Term (PT), which prevents mode-collapse theoretically. This is the same idea as minibatch discrimination (T. Salimans et al).
 
 
 |             pt weight = 0.1              |                No pt loss                |
@@ -95,7 +94,7 @@ Zhao, Junbo, Michael Mathieu, and Yann LeCun. "Energy-based generative adversari
 |                   30k                    |                   30k                    |
 | ![ebgan.pt.30k](assets/ebgan.pt.30k.png) | ![ebgan.nopt.30k](assets/ebgan.nopt.30k.png) |
 
-The model using PT generates slightly better sample visually. However, the results does not seem to prevent mode-collapse. Furthermore, I could not distinguish what is better from repeated experiments.
+The model using PT generates slightly better sample visually. However, it is not clear from this results whether PT prevents mode-collapse. Furthermore, I could not distinguish what setting is better from repeated experiments.
 
 
 |             pt weight = 0.1              |                No pt loss                |
@@ -108,7 +107,7 @@ pt_loss decreases a little faster in the left which used pt_weight=0.1 but there
 
 Mao, Xudong, et al. "Least squares generative adversarial networks." arXiv preprint ArXiv:1611.04076 (2016).
 
-- Unusually, LSGAN used large dimension for latent space (z_dim=1024)
+- Unusually, LSGAN used large latent space dimension (z_dim=1024)
 - But in my experiment, z_dim=100 makes better results than z_dim=1024 which is originally used in paper
 
 |                z_dim=100                 |                z_dim=1024                |
@@ -173,7 +172,9 @@ Regardless of the face collapse phenomenon, the Wasserstein distance decreased s
 | ![wgan-gp.dcgan.w_dist](assets/wgan-gp.dcgan.w_dist.png) | ![wgan-gp.good.w_dist](assets/wgan-gp.good.w_dist.png) |
 | ![wgan-gp.dcgan.w_dist.expand](assets/wgan-gp.dcgan.w_dist.expand.png) | ![wgan-gp.good.w_dist.expand](assets/wgan-gp.good.w_dist.expand.png) |
 
-It is interesting that W_dist < 0 at the end of the training. This indicates that E[fake] > E[real] and, in the point of original GAN view, it means the generator dominates the discriminator. The plots in the last row of the table are just expanded version of the plots in the second row.
+The plots in the last row of the table are just expanded version of the plots in the second row.
+
+It is interesting that W_dist < 0 at the end of the training. This indicates that E[fake] > E[real] and, in the point of original GAN view, it means the generator dominates the discriminator. 
 
 ### BEGAN
 
@@ -196,13 +197,12 @@ batch_size=16, z_dim=64, gamma=0.5.
 | ![began.M](assets/began.M.png) |
 
 
-
 ### DRAGAN
 
 Kodali, Naveen, et al. "How to Train Your DRAGAN." arXiv preprint arXiv:1705.07215 (2017).
 
 - Different with other papers, DRAGAN was motivated from the game theory for improving performance of GAN
-- This approach from the game theory is highly unique and interesting
+- This approach through the game theory is highly unique and interesting
 - Also it shows good results
 - The algorithm looks similar to WGAN-GP
 
@@ -216,11 +216,10 @@ Kodali, Naveen, et al. "How to Train Your DRAGAN." arXiv preprint arXiv:1705.072
 ## Conclusion
 
 - BEGAN showed the best performance
-  - It is also implemented very carefully
+  - It is partly due to a very careful networks structure and parameter settings
   - I wonder whether it will works the best for other dataset
 - The results from WGAN and WGAN-GP were not as impressive as its beautiful theory
-- Personally, DRAGAN and EBGAN suggested highly interesting perspective
-- It is difficult to rank models except BEGAN due to the lack of quantitative measure. The visual quality of generated samples from each model seemed similar
+- It is difficult to rank models except BEGAN due to the lack of quantitative measure. The visual quality of generated samples from each model seemed similar.
 - Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality (except for BEGAN) 🤔🤔
 
 
