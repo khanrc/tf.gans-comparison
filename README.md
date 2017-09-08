@@ -2,7 +2,7 @@
 
 Implementations of some theoretical generative adversarial nets: DCGAN, EBGAN, LSGAN, WGAN, WGAN-GP, BEGAN, and DRAGAN. 
 
-I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset.
+I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset without cherry-picking.
 
 
 ## Table of Contents
@@ -23,7 +23,6 @@ I implemented the structure of model equal to the structure in paper and compare
 * [Usage](#usage)
    * [Requirements](#requirements)
 * [Similar works](#similar-works)
-* [ToDo](#todo)
 
 
 ## Features
@@ -146,7 +145,7 @@ Gulrajani, Ishaan, et al. "Improved training of wasserstein gans." arXiv preprin
 
 #### Face collapse phenomenon
 
-Especially WGAN-GP was collapsed much in the samples when the iteration increased.
+WGAN-GP was collapsed more than other models when the iteration increased.
 
 **DCGAN architecture**
 
@@ -165,14 +164,14 @@ ResNet architecture showed the best visual quality sample in the very early stag
 |                   20k                    |                   25k                    |                   30k                    |                   40k                    |
 | ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) | ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) |
 
-Regardless of the face collapse phenomenon, the Wasserstein distance decreased steadily. It should come from that the critic (discriminator) network failed to find the supremum.
+Regardless of the face collapse phenomenon, the Wasserstein distance decreased steadily. It should come from that the critic (discriminator) network failed to find the supremum and K-Lipschitz function.
 
 |            DCGAN architecture            |           ResNet architecture            |
 | :--------------------------------------: | :--------------------------------------: |
 | ![wgan-gp.dcgan.w_dist](assets/wgan-gp.dcgan.w_dist.png) | ![wgan-gp.good.w_dist](assets/wgan-gp.good.w_dist.png) |
 | ![wgan-gp.dcgan.w_dist.expand](assets/wgan-gp.dcgan.w_dist.expand.png) | ![wgan-gp.good.w_dist.expand](assets/wgan-gp.good.w_dist.expand.png) |
 
-It is interesting that W_dist < 0 at the end of the training. This indicates that E[fake] > E[real] and, in the point of original GAN view, it means the generator dominates the discriminator. 
+It is interesting that W_dist < 0 at the end of the training. This indicates that E[fake] > E[real] and, in the point of original GAN view, it means the generator dominates the discriminator. The plots in the last row of the table is just expanded version of the plot in the second row.
 
 ### BEGAN
 
@@ -232,13 +231,13 @@ Download CelebA dataset:
 $ python download.py celeba
 ```
 
-Convert images to tfrecords format:
+Convert images to tfrecords format. Options for converting are hard-coded, so ensure to modify it before run `convert.py`.
 
 ```
 $ python convert.py
 ```
 
-Train:
+Train. If you want to change the settings of each model, you must also modify code directly.
 
 ```
 $ python train.py --help
@@ -279,12 +278,13 @@ optional arguments:
   --name NAME    default: name=model
 ```
 
+
 ### Requirements
 
 - python 2.7
 - tensorflow 1.2
 - tqdm
-- (optional) pynvml - for auto gpu selection
+- (optional) pynvml - for automatic gpu selection
 
 
 ## Similar works
@@ -295,8 +295,9 @@ optional arguments:
 - [sanghoon/tf-exercise-gan](https://github.com/sanghoon/tf-exercise-gan)
 - [YadiraF/GAN_Theories](https://github.com/YadiraF/GAN_Theories)
 
-## ToDo
+<!-- ## ToDo
 
 - Other dataset - LSUN, cats, ...
 - Flexible input shape
 - Other interesting models - CramerGAN, GoGAN, ...
+ -->
