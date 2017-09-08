@@ -30,8 +30,8 @@ class WGAN(BaseModel):
             C_real = self._critic(X)
             C_fake = self._critic(G, reuse=True)
 
-            W_dist = tf.reduce_mean(C_real - C_fake) # maximize
-            C_loss = -W_dist # minimize
+            W_dist = tf.reduce_mean(C_real - C_fake)
+            C_loss = -W_dist
             G_loss = tf.reduce_mean(-C_fake)
 
             C_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/critic/')

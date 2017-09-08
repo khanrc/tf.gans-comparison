@@ -34,12 +34,13 @@ class WGAN_GP(BaseModel):
             z = tf.placeholder(tf.float32, [None, self.z_dim])
             global_step = tf.Variable(0, name='global_step', trainable=False)
 
+            # `critic` named from wgan (wgan-gp use the term `discriminator` rather than `critic`)
             G = self._generator(z)
             C_real = self._critic(X)
             C_fake = self._critic(G, reuse=True)
 
-            W_dist = tf.reduce_mean(C_real - C_fake) # maximize
-            C_loss = -W_dist # minimize
+            W_dist = tf.reduce_mean(C_real - C_fake)
+            C_loss = -W_dist
             G_loss = tf.reduce_mean(-C_fake)
 
             # Gradient Penalty (GP)
@@ -189,7 +190,6 @@ class WGAN_GP(BaseModel):
 
             return net
 
-    # `critic` named from wgan
     def _good_critic(self, X, reuse=False):
         with tf.variable_scope('critic', reuse=reuse):
             nf = 64
