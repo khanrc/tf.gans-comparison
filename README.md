@@ -54,7 +54,7 @@ http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
 
 - All experiments were performed on 64x64 CelebA dataset
 - The dataset has 202599 images
-- 1 epoch consists of about 15.8k iterations for batch size 128
+- 1 epoch consists of about 1.58k iterations for batch size 128
 
 ## Results
 
@@ -285,7 +285,6 @@ optional arguments:
 - tensorflow 1.2
 - tqdm
 - (optional) pynvml - for automatic gpu selection
-
 
 ## Similar works
 
