@@ -1,5 +1,6 @@
 # coding: utf-8
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 '''https://stackoverflow.com/questions/37604289/tkinter-tclerror-no-display-name-and-no-display-environment-variable
 Matplotlib chooses Xwindows backend by default. You need to set matplotlib do not use Xwindows backend.
 - `matplotlib.use('Agg')`
@@ -20,7 +21,7 @@ def get_best_gpu():
     '''
     try:
         from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetName, nvmlDeviceGetMemoryInfo
-    except Exception, e:
+    except Exception as e:
         print('[!] {} => Use default GPU settings ...\n'.format(e))
         return ''
 
