@@ -82,7 +82,7 @@ def convert(source_dir, target_dir, crop_size, out_size, exts=[''], num_shards=1
 
         im = scipy.misc.imresize(im, out_size)
         example = tf.train.Example(features=tf.train.Features(feature={
-            "shape": _int64_features(im.shape),
+            # "shape": _int64_features(im.shape),
             "image": _bytes_features([im.tostring()])
         }))
         writer.write(example.SerializeToString())
@@ -90,6 +90,41 @@ def convert(source_dir, target_dir, crop_size, out_size, exts=[''], num_shards=1
     writer.close()
 
 
+''' Below function burrowed from https://github.com/fyu/lsun.
+Process: LMDB => images => tfrecords
+It is more efficient method to skip intermediate images, but that is a little messy job.
+The method through images is inefficient but convenient.
+'''
+def export_images(db_path, out_dir, flat=False, limit=-1):
+    print('Exporting {} to {}'.format(db_path, out_dir))
+    env = lmdb.open(db_path, map_size=1099511627776, max_readers=100, readonly=True)
+    num_images = env.stat()['entries']
+    count = 0
+    with env.begin(write=False) as txn:
+        cursor = txn.cursor()
+        for key, val in cursor:
+            if not flat:
+                image_out_dir = join(out_dir, '/'.join(key[:6]))
+            else:
+                image_out_dir = out_dir
+            if not exists(image_out_dir):
+                os.makedirs(image_out_dir)
+            image_out_path = join(image_out_dir, key + '.webp')
+            with open(image_out_path, 'w') as fp:
+                fp.write(val)
+            count += 1
+            if count == limit:
+                break
+            if count % 10000 == 0:
+                print('{}/{} ...'.format(count, num_images))
+
+
 if __name__ == "__main__":
-    convert('./data/celebA', './data/celebA_tfrecords_test', crop_size=[128, 128], out_size=[64, 64], exts=['jpg'], 
-        num_shards=128, tfrecords_prefix='celebA')
+    # CelebA
+    # convert('./data/celebA', './data/celebA_tfrecords_test', crop_size=[128, 128], out_size=[64, 64], 
+    #     exts=['jpg'], num_shards=128, tfrecords_prefix='celebA')
+
+    # LSUN
+    # export_images('./tf.gans-comparison/data/lsun/bedroom_val_lmdb/', './tf.gans-comparison/data/lsun/bedroom_val_images/', flat=True)
+    convert('./data/lsun/bedroom_train_images', './data/lsun/bedroom_128_tfrecords', crop_size=[128, 128], out_size=[128, 128], 
+        exts=['webp'], num_shards=128, tfrecords_prefix='lsun_bedroom')

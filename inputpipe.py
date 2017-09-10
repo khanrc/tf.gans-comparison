@@ -12,15 +12,13 @@ def read_parse_preproc(filename_queue):
         features = tf.parse_single_example(
             records,
             features={
-                "shape": tf.FixedLenFeature([3], tf.int64),
                 "image": tf.FixedLenFeature([], tf.string)
             }
         )
 
         image = tf.decode_raw(features["image"], tf.uint8)
-        # shape = tf.cast(features["shape"], tf.int32) # useless
-
-        image = tf.reshape(image, [64, 64, 3]) # The image_shape must be explicitly specified
+        image = tf.reshape(image, [128, 128, 3]) # The image_shape must be explicitly specified
+        image = tf.image.resize_images(image, [64, 64])
         image = tf.cast(image, tf.float32)
         image = image / 127.5 - 1.0 # preproc - normalize
         

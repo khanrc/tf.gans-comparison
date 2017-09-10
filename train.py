@@ -17,6 +17,7 @@ def build_parser():
     models_str = ' / '.join(config.model_zoo)
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
     parser.add_argument('--name', help='default: name=model')
+    parser.add_argument('--dataset', help='CelebA / LSUN', required=True)
     parser.add_argument('--renew', action='store_true', help='train model from scratch - \
         clean saved checkpoints and summaries', default=False)
     # more arguments: dataset
@@ -26,9 +27,9 @@ def build_parser():
 
 def input_pipeline(glob_pattern, batch_size, num_threads, num_epochs):
     tfrecords_list = glob.glob(glob_pattern)
-    num_examples = utils.num_examples_from_tfrecords(tfrecords_list)
+    # num_examples = utils.num_examples_from_tfrecords(tfrecords_list) # takes too long time for lsun
     X = ip.shuffle_batch_join(tfrecords_list, batch_size=batch_size, num_threads=num_threads, num_epochs=num_epochs)
-    return X, num_examples
+    return X
 
 
 def sample_z(shape):
@@ -66,7 +67,8 @@ def train(model, input_op, num_epochs, batch_size, n_examples, renew=False):
         # make config_summary before define of summary_writer - bypass bug of tensorboard
         
         # It seems that batch_size should have been contained in the model config ... 
-        model_config_list = [[k, str(w)] for k, w in sorted(model.args.items()) + [('batch_size', batch_size)]]
+        config_list = [('batch_size', batch_size), ('dataset', FLAGS.dataset)]
+        model_config_list = [[k, str(w)] for k, w in sorted(model.args.items()) + config_list]
         model_config_summary_op = tf.summary.text('config', tf.convert_to_tensor(model_config_list), collections=[])
         model_config_summary = sess.run(model_config_summary_op)
 
@@ -119,12 +121,16 @@ if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
     FLAGS.model = FLAGS.model.upper()
+    FLAGS.dataset = FLAGS.dataset.lower()
     if FLAGS.name is None:
         FLAGS.name = FLAGS.model.lower()
     config.pprint_args(FLAGS)
 
+    # get information for dataset
+    dataset_pattern, n_examples = config.get_dataset(FLAGS.dataset)
+
     # input pipeline
-    X, n_examples = input_pipeline('./data/celebA_tfrecords/*.tfrecord', batch_size=FLAGS.batch_size, 
+    X = input_pipeline(dataset_pattern, batch_size=FLAGS.batch_size, 
         num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
     model = config.get_model(FLAGS.model, FLAGS.name, training=True)
     train(model=model, input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, 

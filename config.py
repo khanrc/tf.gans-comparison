@@ -27,6 +27,23 @@ def get_model(mtype, name, training):
     return model(name=name, training=training)
 
 
+def get_dataset(dataset_name):
+    celebA_64 = './data/celebA_tfrecords/*.tfrecord'
+    celebA_128 = './data/celebA_128_tfrecords/*.tfrecord'
+    lsun_bedroom_128 = './data/lsun/bedroom_128_tfrecords/*.tfrecord'
+
+    if dataset_name == 'celeba':
+        path = celebA_128
+        n_examples = 202599
+    elif dataset_name == 'lsun':
+        path = lsun_bedroom_128
+        n_examples = 3033042
+    else:
+        raise ValueError('{} is does not supported. dataset must be celeba or lsun.'.format(dataset_name))
+
+    return path, n_examples
+
+
 def pprint_args(FLAGS):
     print("\nParameters:")
     for attr, value in sorted(vars(FLAGS).items()):
