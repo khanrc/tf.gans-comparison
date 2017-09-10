@@ -16,7 +16,8 @@ def _int64_features(value):
 
 
 # preproc for celebA
-def center_crop(im, output_height, output_width):
+def center_crop(im, output_size):
+    output_height, output_width = output_size
     h, w = im.shape[:2]
     if h < output_height and w < output_width:
         raise ValueError("image is small")
@@ -26,7 +27,7 @@ def center_crop(im, output_height, output_width):
     return im[offset_h:offset_h+output_height, offset_w:offset_w+output_width, :]
 
 
-def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_prefix=''):
+def convert(source_dir, target_dir, crop_size, out_size, exts=[''], num_shards=128, tfrecords_prefix=''):
 	if not tf.gfile.Exists(source_dir):
 		print('source_dir does not exists')
 		return
@@ -72,14 +73,14 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 		im = scipy.misc.imread(path, mode='RGB')
 		# preproc
 		try:
-			im = center_crop(im)
+			im = center_crop(im, crop_size)
 		except Exception, e:
 			# print("im_path: {}".format(path))
 			# print("im_shape: {}".format(im.shape))
 			print("[Exception] {}".format(e))
 			continue
 
-		im = scipy.misc.imresize(im, [64, 64])
+		im = scipy.misc.imresize(im, out_size)
 		example = tf.train.Example(features=tf.train.Features(feature={
 			"shape": _int64_features(im.shape),
 			"image": _bytes_features([im.tostring()])
@@ -88,6 +89,7 @@ def convert(source_dir, target_dir, exts=['jpg'], num_shards=128, tfrecords_pref
 
 	writer.close()
 
-if __name__ == "__main__":
-	convert('./data/celebA', './data/celebA_tfrecords', exts=['jpg'], num_shards=128, tfrecords_prefix='celebA')
 
+if __name__ == "__main__":
+	convert('./data/celebA', './data/celebA_tfrecords_test', crop_size=[128, 128], out_size=[64, 64], exts=['jpg'], 
+        num_shards=128, tfrecords_prefix='celebA')
