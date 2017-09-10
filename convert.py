@@ -59,6 +59,7 @@ def convert(source_dir, target_dir, crop_size, out_size, exts=[''], num_shards=1
 
     # convert to tfrecords
     shard_idx = 0
+    writer = None
     for i, path in enumerate(path_list):
         if i % num_per_shard == 0 and shard_idx < num_shards:
             shard_idx += 1
@@ -74,7 +75,7 @@ def convert(source_dir, target_dir, crop_size, out_size, exts=[''], num_shards=1
         # preproc
         try:
             im = center_crop(im, crop_size)
-        except Exception, e:
+        except Exception as e:
             # print("im_path: {}".format(path))
             # print("im_shape: {}".format(im.shape))
             print("[Exception] {}".format(e))
