@@ -20,7 +20,6 @@ def build_parser():
     parser.add_argument('--dataset', help='CelebA / LSUN', required=True)
     parser.add_argument('--renew', action='store_true', help='train model from scratch - \
         clean saved checkpoints and summaries', default=False)
-    # more arguments: dataset
 
     return parser
 
@@ -42,8 +41,8 @@ def train(model, input_op, num_epochs, batch_size, n_examples, renew=False):
     print("\n# of examples: {}".format(n_examples))
     print("steps per epoch: {}\n".format(n_examples//batch_size))
 
-    summary_path = os.path.join('./summary/', model.name)
-    ckpt_path = os.path.join('./checkpoints', model.name)
+    summary_path = os.path.join('./summary/', FLAGS.dataset, model.name)
+    ckpt_path = os.path.join('./checkpoints', FLAGS.dataset, model.name)
     if renew:
         if os.path.exists(summary_path):
             tf.gfile.DeleteRecursively(summary_path)
@@ -78,7 +77,7 @@ def train(model, input_op, num_epochs, batch_size, n_examples, renew=False):
         pbar = tqdm(total=total_steps, desc='global_step')
 
 
-        saver = tf.train.Saver(max_to_keep=1000) # save all checkpoints
+        saver = tf.train.Saver(max_to_keep=9999) # save all checkpoints
         global_step = 0
 
         ckpt = tf.train.get_checkpoint_state(ckpt_path)

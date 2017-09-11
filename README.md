@@ -56,6 +56,15 @@ http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
 - The dataset has 202599 images
 - 1 epoch consists of about 1.58k iterations for batch size 128
 
+### LSUN bedroom
+
+http://lsun.cs.princeton.edu/2017/
+
+- The dataset has 3033042 images
+- 1 epoch consists of about 23.7k iterations for batch size 128
+
+This dataset is provided in [LMDB]((http://www.lmdb.tech/)) format. https://github.com/fyu/lsun provides documentation and demo code to use it. 
+
 ## Results
 
 - I implemented the same as the proposed model in each paper, but ignored some details (or the paper did not describe details of model)
@@ -228,22 +237,25 @@ Kodali, Naveen, et al. "How to Train Your DRAGAN." arXiv preprint arXiv:1705.072
 Download CelebA dataset:
 
 ```
-$ python download.py celeba
+$ python download.py celebA
+$ python download.py lsun
 ```
 
-Convert images to tfrecords format. Options for converting are hard-coded, so ensure to modify it before run `convert.py`.
+Convert images to tfrecords format:   
+Options for converting are hard-coded, so ensure to modify it before run `convert.py`. In particular, LSUN dataset is provided in LMDB format.
 
 ```
 $ python convert.py
 ```
 
-Train. If you want to change the settings of each model, you must also modify code directly.
+Train:   
+If you want to change the settings of each model, you must also modify code directly.
 
 ```
 $ python train.py --help
 usage: train.py [-h] [--num_epochs NUM_EPOCHS] [--batch_size BATCH_SIZE]
                 [--num_threads NUM_THREADS] --model MODEL [--name NAME]
-                [--renew]
+                --dataset DATASET [--renew]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -256,6 +268,7 @@ optional arguments:
   --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
                         DRAGAN
   --name NAME           default: name=model
+  --dataset DATASET     CelebA / LSUN
   --renew               train model from scratch - clean saved checkpoints and
                         summaries
 ```
@@ -263,19 +276,20 @@ optional arguments:
 Monitor through TensorBoard:
 
 ```
-$ tensorboard --logdir=summary/name
+$ tensorboard --logdir=summary/dataset/name
 ```
 
 Evaluate (generate fake samples):
 
 ```
 $ python eval.py --help
-usage: eval.py [-h] --model MODEL [--name NAME]
+usage: eval.py [-h] --model MODEL [--name NAME] --dataset DATASET
 
 optional arguments:
-  -h, --help     show this help message and exit
-  --model MODEL  DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN / DRAGAN
-  --name NAME    default: name=model
+  -h, --help         show this help message and exit
+  --model MODEL      DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN / DRAGAN
+  --name NAME        default: name=model
+  --dataset DATASET  CelebA / LSUN
 ```
 
 
