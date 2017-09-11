@@ -11,6 +11,7 @@ I implemented the structure of model equal to the structure in paper and compare
 * [Models](#models)
 * [Dataset](#dataset)
    * [CelebA](#celeba)
+   * [LSUN](#lsun-bedroom)
 * [Results](#results)
    * [DCGAN](#dcgan)
    * [EBGAN](#ebgan)
