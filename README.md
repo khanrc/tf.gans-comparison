@@ -63,7 +63,7 @@ http://lsun.cs.princeton.edu/2017/
 - The dataset has 3033042 images
 - 1 epoch consists of about 23.7k iterations for batch size 128
 
-This dataset is provided in [LMDB]((http://www.lmdb.tech/)) format. https://github.com/fyu/lsun provides documentation and demo code to use it. 
+This dataset is provided in [LMDB](http://www.lmdb.tech/) format. https://github.com/fyu/lsun provides documentation and demo code to use it. 
 
 ## Results
 
