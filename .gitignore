@@ -3,3 +3,4 @@
 *.ipynb
 *.log
 .DS_Store
+models/patchgan.py

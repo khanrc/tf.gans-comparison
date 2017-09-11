@@ -92,10 +92,10 @@ class WGAN_GP(BaseModel):
         return self._good_generator(z, reuse)
 
     def _dcgan_critic(self, X, reuse=False):
-    	'''
-    	K-Lipschitz function.
-    	WGAN-GP does not use critic in batch norm.
-    	'''
+        '''
+        K-Lipschitz function.
+        WGAN-GP does not use critic in batch norm.
+        '''
         with tf.variable_scope('critic', reuse=reuse):
             net = X
             

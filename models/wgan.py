@@ -67,7 +67,7 @@ class WGAN(BaseModel):
             #         C_clips.append(tf.assign(var, tf.clip_by_value(var, -1.00, 1.00)))
 
             with tf.control_dependencies([C_train_op]): # should be iterable
-            	C_train_op = tf.tuple(C_clips) # tf.group ?
+                C_train_op = tf.tuple(C_clips) # tf.group ?
 
             # summaries
             # per-step summary
@@ -92,7 +92,7 @@ class WGAN(BaseModel):
             self.global_step = global_step
 
     def _critic(self, X, reuse=False):
-    	''' K-Lipschitz function '''
+        ''' K-Lipschitz function '''
         with tf.variable_scope('critic', reuse=reuse):
             net = X
             
