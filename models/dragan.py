@@ -43,8 +43,10 @@ class DRAGAN(BaseModel):
             x_mean, x_var = tf.nn.moments(X, axes=[0,1,2,3])
             x_std = tf.sqrt(x_var) # magnitude of noise decides the size of local region
             noise = self.C*x_std*eps # delta in paper
-            alpha = tf.random_uniform(shape=[shape[0], 1, 1, 1], minval=0., maxval=1.)
-            xhat = X + alpha*noise
+            # Author suggested U[0,1] in original paper, but he admitted it is bug in github
+            # (https://github.com/kodalinaveen3/DRAGAN). It should be two-sided.
+            alpha = tf.random_uniform(shape=[shape[0], 1, 1, 1], minval=-1., maxval=1.) 
+            xhat = tf.clip_by_value(X + alpha*noise, -1., 1.) # x_hat should be in the space of X
 
             D_xhat_prob, D_xhat_logits = self._discriminator(xhat, reuse=True)
             D_xhat_grad = tf.gradients(D_xhat_prob, xhat)[0] # gradient of D(x_hat)
@@ -56,15 +58,11 @@ class DRAGAN(BaseModel):
             D_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/discriminator/')
             G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/generator/')
 
-            D_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/discriminator/')
-            G_update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope=self.name+'/generator/')
-
-            with tf.control_dependencies(D_update_ops):
-                D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1, beta2=self.beta2).\
-                    minimize(D_loss, var_list=D_vars)
-            with tf.control_dependencies(G_update_ops):
-                G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1, beta2=self.beta2).\
-                    minimize(G_loss, var_list=G_vars, global_step=global_step)
+            # DRAGAN does not use BN, so you don't need to set control dependencies for update ops.
+            D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1, beta2=self.beta2).\
+                minimize(D_loss, var_list=D_vars)
+            G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1, beta2=self.beta2).\
+                minimize(G_loss, var_list=G_vars, global_step=global_step)
 
             # summaries
             # per-step summary
@@ -76,8 +74,8 @@ class DRAGAN(BaseModel):
 
             # sparse-step summary
             tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
-            # tf.summary.histogram('real_probs', D_real_prob)
-            # tf.summary.histogram('fake_probs', D_fake_prob)
+            tf.summary.histogram('real_probs', D_real_prob)
+            tf.summary.histogram('fake_probs', D_fake_prob)
             self.all_summary_op = tf.summary.merge_all()
 
             # accesible points
