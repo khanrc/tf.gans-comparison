@@ -49,9 +49,11 @@ class DRAGAN(BaseModel):
             xhat = tf.clip_by_value(X + alpha*noise, -1., 1.) # x_hat should be in the space of X
 
             D_xhat_prob, D_xhat_logits = self._discriminator(xhat, reuse=True)
-            D_xhat_grad = tf.gradients(D_xhat_prob, xhat)[0] # gradient of D(x_hat)
-            D_xhat_grad_norm = tf.norm(slim.flatten(D_xhat_grad), axis=1)  # l2 norm
-            # GP = ld * tf.reduce_mean(tf.square(tf.reduce_sum(tf.square(D_xhat_prob), axis=[1,2,3])**0.5 - 1.))
+            # Originally, the paper suggested D_xhat_prob instead of D_xhat_logits.
+            # But D_xhat_prob (D with sigmoid) causes numerical problem (NaN in gradient).
+            D_xhat_grad = tf.gradients(D_xhat_logits, xhat)[0] # gradient of D(x_hat)
+            D_xhat_grad_norm = tf.norm(D_xhat_grad, axis=1)  # l2 norm
+            # D_xhat_grad_norm = tf.sqrt(tf.reduce_sum(tf.square(D_xhat_grad), axis=[1]))
             GP = self.ld * tf.reduce_mean(tf.square(D_xhat_grad_norm - 1.))
             D_loss += GP
 
