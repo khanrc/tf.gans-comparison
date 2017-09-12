@@ -69,15 +69,20 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
         # It seems that batch_size should have been contained in the model config ... 
         config_list = [('batch_size', batch_size), ('dataset', dataset)]
         model_config_list = [[k, str(w)] for k, w in sorted(model.args.items()) + config_list]
-        model_config_summary_op = tf.summary.text('config', tf.convert_to_tensor(model_config_list), collections=[])
+        model_config_summary_op = tf.summary.text(model.name + '/config', tf.convert_to_tensor(model_config_list), 
+            collections=[])
         model_config_summary = sess.run(model_config_summary_op)
+
+        # print to console
+        print("\n====== Model configs ======")
+        for k, v in model_config_list:
+            print("{}: {}".format(k, v))
+        print("===========================\n")
 
         summary_writer = tf.summary.FileWriter(summary_path, flush_secs=30, graph=sess.graph)
         summary_writer.add_summary(model_config_summary)
         total_steps = int(np.ceil(n_examples * num_epochs / float(batch_size))) # total global step
         pbar = tqdm(total=total_steps, desc='global_step')
-
-
         saver = tf.train.Saver(max_to_keep=9999) # save all checkpoints
         global_step = 0
 
