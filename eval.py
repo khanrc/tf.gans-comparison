@@ -15,6 +15,8 @@ def build_parser():
     parser.add_argument('--model', help=models_str, required=True) 
     parser.add_argument('--name', help='default: name=model')
     parser.add_argument('--dataset', help='CelebA / LSUN', required=True)
+    parser.add_argument('--sample_size', '-N', help='# of samples. It should be a square number. (default: 16)',
+        default=4, type=int)
 
     return parser
 
@@ -91,7 +93,6 @@ $ convert -delay 20 eval/* movie.gif
 #     imageio.mimsave('movie.gif', images, duration=0.2)
 
 
-
 if __name__ == "__main__":
     parser = build_parser()
     FLAGS = parser.parse_args()
@@ -101,6 +102,9 @@ if __name__ == "__main__":
         FLAGS.name = FLAGS.model.lower()
     config.pprint_args(FLAGS)
 
+    N = FLAGS.sample_size**0.5
+    assert N == int(N), 'sample size should be a square number'
+
     # training=False => build generator only
     model = config.get_model(FLAGS.model, FLAGS.name, training=False)
-    eval(model, dataset=FLAGS.dataset, name=FLAGS.name, sample_shape=[4,4], load_all_ckpt=True)
+    eval(model, dataset=FLAGS.dataset, name=FLAGS.name, sample_shape=[int(N),int(N)], load_all_ckpt=True)
