@@ -90,11 +90,13 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
         if ckpt:
             saver.restore(sess, ckpt.model_checkpoint_path)
             global_step = sess.run(model.global_step)
-            print('\nRestore from {} ... starting global step is {}\n'.format(ckpt.model_checkpoint_path, global_step))
+            print('\n[!] Restore from {} ... starting global step is {}\n'.format(ckpt.model_checkpoint_path, global_step))
             pbar.update(global_step)
 
         try:
-            while not coord.should_stop():
+            # If training process was resumed from checkpoints, input pipeline cannot detect
+            # when training should stop. So we need `global_step < total_step` condition.
+            while not coord.should_stop() and global_step < total_steps:
                 # model.all_summary_op contains histogram summary and image summary which are heavy op
                 summary_op = model.summary_op if global_step % 100 == 0 else model.all_summary_op
 
@@ -133,10 +135,10 @@ if __name__ == "__main__":
 
     # get information for dataset
     dataset_pattern, n_examples = config.get_dataset(FLAGS.dataset)
-
     # input pipeline
     X = input_pipeline(dataset_pattern, batch_size=FLAGS.batch_size, 
         num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
+
     model = config.get_model(FLAGS.model, FLAGS.name, training=True)
     train(model=model, dataset=FLAGS.dataset, input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, 
         n_examples=n_examples, ckpt_step=FLAGS.ckpt_step, renew=FLAGS.renew)
