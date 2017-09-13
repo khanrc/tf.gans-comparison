@@ -8,7 +8,7 @@ from basemodel import BaseModel
 
 class EBGAN(BaseModel):
     def __init__(self, name, training, D_lr=1e-3, G_lr=1e-3, image_shape=[64, 64, 3], z_dim=100, 
-        pt_weight=0.0, margin=20.):
+        pt_weight=0.1, margin=20.):
         ''' The default value of pt_weight and margin is taken from the paper for celebA. '''
         self.pt_weight = pt_weight
         self.m = margin
