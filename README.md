@@ -132,6 +132,7 @@ Arjovsky, Martin, Soumith Chintala, and Léon Bottou. "Wasserstein gan." arXiv p
 
 - The samples from WGAN are not that impressive - compared to the very impressive theory
 - Also no specific network structure proposed, so DCGAN architecture was used for experiments
+- In the [author's implementation](https://github.com/martinarjovsky/WassersteinGAN), they used higher n_critic in the early stage of training and per 500 iterations
 
 |               30k                |               W distance               |
 | :------------------------------: | :------------------------------------: |
@@ -206,6 +207,15 @@ batch_size=16, z_dim=64, gamma=0.5.
 | :----------------------------: |
 | ![began.M](assets/began.M.png) |
 
+<!-- #### Speck-like artifacts phenomenon
+
+As you can see above results, the samples of BEGAN has speckle artifacts. It can be reduced by adjusting gamma.
+
+| gamma=0.3 | gam  |
+| --------- | ---- |
+|           |      | -->
+
+
 
 ### DRAGAN
 
@@ -213,21 +223,22 @@ Kodali, Naveen, et al. "How to Train Your DRAGAN." arXiv preprint arXiv:1705.072
 
 - Different with other papers, DRAGAN was motivated from the game theory for improving performance of GAN
 - This approach through the game theory is highly unique and interesting
-- Also it shows good results
-- The algorithm looks similar to WGAN-GP
+- But, IMHO, there is not much real contribution. The algorithm is similar to WGAN-GP
 
-|          DCGAN architecture          |
-| :----------------------------------: |
-|                 30k                  |
-| ![dragan.30k](assets/dragan.30k.png) |
+|            DCGAN architecture            |
+| :--------------------------------------: |
+|                   120k                    |
+| ![dragan.30k](assets/dragan.fixed.120k.png) |
+
+The original paper has some bugs. One of those is image x is pertured only positive-sided. I applied two-sided perturbation as the author admitted this bug on the [GitHub](https://github.com/kodalinaveen3/DRAGAN).
 
 
 
 ## Conclusion
 
 - BEGAN showed the best performance
-  - It is partly due to a very careful networks structure and parameter settings
-  - I wonder whether it will works the best for other dataset
+  - But it works terribly for LSUN dataset
+  - I wonder if it works only for face datasets and why
 - The results from WGAN and WGAN-GP were not as impressive as its beautiful theory
 - It is difficult to rank models except BEGAN due to the lack of quantitative measure. The visual quality of generated samples from each model seemed similar.
 - Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality (except for BEGAN) 🤔🤔
@@ -285,12 +296,17 @@ Evaluate (generate fake samples):
 ```
 $ python eval.py --help
 usage: eval.py [-h] --model MODEL [--name NAME] --dataset DATASET
+               [--sample_size SAMPLE_SIZE]
 
 optional arguments:
-  -h, --help         show this help message and exit
-  --model MODEL      DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN / DRAGAN
-  --name NAME        default: name=model
-  --dataset DATASET  CelebA / LSUN
+  -h, --help            show this help message and exit
+  --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
+                        DRAGAN
+  --name NAME           default: name=model
+  --dataset DATASET     CelebA / LSUN
+  --sample_size SAMPLE_SIZE, -N SAMPLE_SIZE
+                        # of samples. It should be a square number. (default:
+                        16)
 ```
 
 
@@ -314,4 +330,4 @@ optional arguments:
 - Other dataset - LSUN, cats, ...
 - Flexible input shape
 - Other interesting models - CramerGAN, GoGAN, ...
- -->
+   -->
