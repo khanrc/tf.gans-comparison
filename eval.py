@@ -16,7 +16,7 @@ def build_parser():
     parser.add_argument('--name', help='default: name=model')
     parser.add_argument('--dataset', help='CelebA / LSUN', required=True)
     parser.add_argument('--sample_size', '-N', help='# of samples. It should be a square number. (default: 16)',
-        default=4, type=int)
+        default=16, type=int)
 
     return parser
 
