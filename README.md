@@ -297,7 +297,7 @@ optional arguments:
 ### Requirements
 
 - python 2.7
-- tensorflow 1.2
+- tensorflow >= 1.2 (verified on 1.2 and 1.3)
 - tqdm
 - (optional) pynvml - for automatic gpu selection
 
