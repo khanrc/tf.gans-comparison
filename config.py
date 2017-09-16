@@ -19,6 +19,8 @@ def get_model(mtype, name, training):
         model = began.BEGAN
     elif mtype == 'DRAGAN':
         model = dragan.DRAGAN
+    elif mtype == 'COULOMBGAN':
+        model = coulombgan.CoulombGAN
     else:
         assert False, mtype + ' is not in the model zoo'
 
