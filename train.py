@@ -4,7 +4,7 @@ import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
 import inputpipe as ip
-import glob, os
+import glob, os, sys
 from argparse import ArgumentParser
 import utils, config
 
@@ -74,7 +74,10 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
         model_config_summary = sess.run(model_config_summary_op)
 
         # print to console
-        print("\n====== Model configs ======")
+        print("\n====== Process info =======")
+        print("argv: {}".format(' '.join(sys.argv)))
+        print("PID: {}".format(os.getpid()))
+        print("====== Model configs ======")
         for k, v in model_config_list:
             print("{}: {}".format(k, v))
         print("===========================\n")
