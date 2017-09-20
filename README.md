@@ -260,10 +260,10 @@ BEGAN in the LSUN datset works terribly. Not only severe mode-collapse was obser
 
 same hyperparameters, only difference is gamma=0.4
 
-| 50k                                      | 100k                                     | 150k                                     |
-| ---------------------------------------- | ---------------------------------------- | ---------------------------------------- |
+|                   50k                    |                   100k                   |                   150k                   |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
 | ![began.gm4.50k](assets/celeba/began.gm4.50k.png) | ![began.gm4.100k](assets/celeba/began.gm4.100k.png) | ![began.gm4.150k](assets/celeba/began.gm4.150k.png) |
-| 200k                                     | 250k                                     | 290k                                     |
+|                   200k                   |                   250k                   |                   290k                   |
 | ![began.gm4.200k](assets/celeba/began.gm4.200k.png) | ![began.gm4.250k](assets/celeba/began.gm4.250k.png) | ![began.gm4.290k](assets/celeba/began.gm4.290k.png) |
 
 (There is no particular reason why the last experiment is 290k instead of 300k...)
