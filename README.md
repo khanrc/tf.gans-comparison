@@ -45,7 +45,7 @@ I implemented the structure of model equal to the structure in paper and compare
 - BEGAN
 - DRAGAN
 
-The family of conditional GANs are excluded (CGAN, acGAN, SGAN, and so on). 
+The family of conditional GANs are excluded (CGAN, acGAN, and so on). 
 
 ## Dataset 
 
@@ -83,11 +83,18 @@ Radford, Alec, Luke Metz, and Soumith Chintala. "Unsupervised representation lea
 |                G_lr=2e-4                 |                G_lr=1e-3                 |
 | :--------------------------------------: | :--------------------------------------: |
 |                   50k                    |                   30k                    |
-| ![dcgan.G2e-4.50k](assets/dcgan.G2e-4.50k.png) | ![dcgan.G1e-3.30k](assets/dcgan.G1e-3.30k.png) |
+| ![dcgan.G2e-4.50k](assets/celeba/dcgan.G2e-4.50k.png) | ![dcgan.G1e-3.30k](assets/celeba/dcgan.G1e-3.30k.png) |
 
 Second row (50k, 30k) indicates each training iteration.
 
 Higher learning rate (1e-3) for generator made better results. In this case, however, the generator has been collapsed sometimes due to its large learning rate. Lowering both learning rate may bring stability like https://ajolicoeur.wordpress.com/cats/ in which suggested D_lr=5e-5 and G_lr=2e-4.
+
+|                   LSUN                   |
+| :--------------------------------------: |
+|                   100k                   |
+| ![dcgan.100k](assets/lsun/dcgan.100k.png) |
+
+
 
 ### EBGAN
 
@@ -102,16 +109,21 @@ Zhao, Junbo, Michael Mathieu, and Yann LeCun. "Energy-based generative adversari
 |             pt weight = 0.1              |                No pt loss                |
 | :--------------------------------------: | :--------------------------------------: |
 |                   30k                    |                   30k                    |
-| ![ebgan.pt.30k](assets/ebgan.pt.30k.png) | ![ebgan.nopt.30k](assets/ebgan.nopt.30k.png) |
+| ![ebgan.pt.30k](assets/celeba/ebgan.pt.30k.png) | ![ebgan.nopt.30k](assets/celeba/ebgan.nopt.30k.png) |
 
 The model using PT generates slightly better sample visually. However, it is not clear from this results whether PT prevents mode-collapse. Furthermore, I could not distinguish what setting is better from repeated experiments.
 
 
 |             pt weight = 0.1              |                No pt loss                |
 | :--------------------------------------: | :--------------------------------------: |
-| ![ebgan.pt.graph](assets/ebgan.pt.graph.png) | ![ebgan.nopt.graph](assets/ebgan.nopt.graph.png) |
+| ![ebgan.pt.graph](assets/celeba/ebgan.pt.graph.png) | ![ebgan.nopt.graph](assets/celeba/ebgan.nopt.graph.png) |
 
 pt_loss decreases a little faster in the left which used pt_weight=0.1 but there is no big difference and even at the end the right which used no pt_loss showed a lower pt_loss. So I wonder: is the PT loss really working for preventing mode-collapse as described in the paper?
+
+|                  LSUN                   |
+| :-------------------------------------: |
+|                   80k                   |
+| ![ebgan.80k](assets/lsun/ebgan.80k.png) |
 
 ### LSGAN
 
@@ -123,8 +135,12 @@ Mao, Xudong, et al. "Least squares generative adversarial networks." arXiv prepr
 |                z_dim=100                 |                z_dim=1024                |
 | :--------------------------------------: | :--------------------------------------: |
 |                   30k                    |                   30k                    |
-| ![lsgan.100.30k](assets/lsgan.100.30k.png) | ![lsgan.1024.30k](assets/lsgan.1024.30k.png) |
+| ![lsgan.100.30k](assets/celeba/lsgan.100.30k.png) | ![lsgan.1024.30k](assets/celeba/lsgan.1024.30k.png) |
 
+|                   LSUN                   |
+| :--------------------------------------: |
+|                   150k                   |
+| ![lsgan.150k](assets/lsun/lsgan.150k.png) |
 
 ### WGAN
 
@@ -134,10 +150,14 @@ Arjovsky, Martin, Soumith Chintala, and Léon Bottou. "Wasserstein gan." arXiv p
 - Also no specific network structure proposed, so DCGAN architecture was used for experiments
 - In the [author's implementation](https://github.com/martinarjovsky/WassersteinGAN), they used higher n_critic in the early stage of training and per 500 iterations
 
-|               30k                |               W distance               |
-| :------------------------------: | :------------------------------------: |
-| ![wgan.30k](assets/wgan.30k.png) | ![wgan.w_dist](assets/wgan.w_dist.png) |
+|                   30k                   |                W distance                |
+| :-------------------------------------: | :--------------------------------------: |
+| ![wgan.30k](assets/celeba/wgan.30k.png) | ![wgan.w_dist](assets/celeba/wgan.w_dist.png) |
 
+|                  LSUN                   |
+| :-------------------------------------: |
+|                  230k                   |
+| ![wgan.230k](assets/lsun/wgan.230k.png) |
 
 ### WGAN-GP
 
@@ -151,7 +171,12 @@ Gulrajani, Ishaan, et al. "Improved training of wasserstein gans." arXiv preprin
 |            DCGAN architecture            |           ResNet architecture            |
 | :--------------------------------------: | :--------------------------------------: |
 |                   30k                    |           7k, batch size = 64            |
-| ![wgan-gp.dcgan.30k](assets/wgan-gp.dcgan.30k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) |
+| ![wgan-gp.dcgan.30k](assets/celeba/wgan-gp.dcgan.30k.png) | ![wgan-gp.good.7k](assets/celeba/wgan-gp.good.7k.png) |
+
+|                   LSUN                   |
+| :--------------------------------------: |
+|        100k, ResNet architecture         |
+| ![wgan-gp.150k](assets/lsun/wgan-gp.150k.png) |
 
 #### Face collapse phenomenon
 
@@ -161,7 +186,7 @@ WGAN-GP was collapsed more than other models when the iteration increases.
 
 |                   10k                    |                   20k                    |                   30k                    |
 | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
-| ![wgan-gp.dcgan.10k](assets/wgan-gp.dcgan.10k.png) | ![wgan-gp.dcgan.20k](assets/wgan-gp.dcgan.20k.png) | ![wgan-gp.dcgan.30k](assets/wgan-gp.dcgan.30k.png) |
+| ![wgan-gp.dcgan.10k](assets/celeba/wgan-gp.dcgan.10k.png) | ![wgan-gp.dcgan.20k](assets/celeba/wgan-gp.dcgan.20k.png) | ![wgan-gp.dcgan.30k](assets/celeba/wgan-gp.dcgan.30k.png) |
 
 
 **ResNet architecture**
@@ -172,16 +197,16 @@ batch_size=64.
 
 |                    5k                    |                    7k                    |                   10k                    |                   15k                    |
 | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
-| ![wgan-gp.good.5k](assets/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/wgan-gp.good.10k.png) | ![wgan-gp.good.15k](assets/wgan-gp.good.15k.png) |
+| ![wgan-gp.good.5k](assets/celeba/wgan-gp.good.5k.png) | ![wgan-gp.good.7k](assets/celeba/wgan-gp.good.7k.png) | ![wgan-gp.good.10k](assets/celeba/wgan-gp.good.10k.png) | ![wgan-gp.good.15k](assets/celeba/wgan-gp.good.15k.png) |
 |                   20k                    |                   25k                    |                   30k                    |                   40k                    |
-| ![wgan-gp.good.20k](assets/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/wgan-gp.good.25k.png) | ![wgan-gp.good.30k](assets/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/wgan-gp.good.40k.png) |
+| ![wgan-gp.good.20k](assets/celeba/wgan-gp.good.20k.png) | ![wgan-gp.good.25k](assets/celeba/wgan-gp.good.25k.png) | ![wgan-gp.good.30k](assets/celeba/wgan-gp.good.30k.png) | ![wgan-gp.good.40k](assets/celeba/wgan-gp.good.40k.png) |
 
 Regardless of the face collapse phenomenon, the Wasserstein distance decreased steadily. It should come from that the critic (discriminator) network failed to find the supremum and K-Lipschitz function.
 
 |            DCGAN architecture            |           ResNet architecture            |
 | :--------------------------------------: | :--------------------------------------: |
-| ![wgan-gp.dcgan.w_dist](assets/wgan-gp.dcgan.w_dist.png) | ![wgan-gp.good.w_dist](assets/wgan-gp.good.w_dist.png) |
-| ![wgan-gp.dcgan.w_dist.expand](assets/wgan-gp.dcgan.w_dist.expand.png) | ![wgan-gp.good.w_dist.expand](assets/wgan-gp.good.w_dist.expand.png) |
+| ![wgan-gp.dcgan.w_dist](assets/celeba/wgan-gp.dcgan.w_dist.png) | ![wgan-gp.good.w_dist](assets/celeba/wgan-gp.good.w_dist.png) |
+| ![wgan-gp.dcgan.w_dist.expand](assets/celeba/wgan-gp.dcgan.w_dist.expand.png) | ![wgan-gp.good.w_dist.expand](assets/celeba/wgan-gp.good.w_dist.expand.png) |
 
 The plots in the last row of the table are just expanded version of the plots in the second row.
 
@@ -199,13 +224,13 @@ Berthelot, David, Tom Schumm, and Luke Metz. "Began: Boundary equilibrium genera
 
 batch_size=16, z_dim=64, gamma=0.5.
 
-|                30k                 |                50k                 |                75k                 |
-| :--------------------------------: | :--------------------------------: | :--------------------------------: |
-| ![began.30k](assets/began.30k.png) | ![began.50k](assets/began.50k.png) | ![began.75k](assets/began.75k.png) |
+|                   30k                    |                   50k                    |                   75k                    |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
+| ![began.30k](assets/celeba/began.30k.png) | ![began.50k](assets/celeba/began.50k.png) | ![began.75k](assets/celeba/began.75k.png) |
 
-|     Convergence measure M      |
-| :----------------------------: |
-| ![began.M](assets/began.M.png) |
+|         Convergence measure M         |
+| :-----------------------------------: |
+| ![began.M](assets/celeba/began.M.png) |
 
 <!-- #### Speck-like artifacts phenomenon
 
@@ -214,6 +239,21 @@ As you can see above results, the samples of BEGAN has speckle artifacts. It can
 | gamma=0.3 | gam  |
 | --------- | ---- |
 |           |      | -->
+
+
+
+BEGAN in the LSUN datset works terribly. Not only severe mode-collapse was observed, but also generated images were not realistic.
+
+|                   LSUN                   |
+| :--------------------------------------: |
+|                   150k                   |
+| ![began.150k](assets/lsun/began.150k.png) |
+|                   200k                   |
+| ![began.200k](assets/lsun/began.200k.png) |
+|                   250k                   |
+| ![began.250k](assets/lsun/began.250k.png) |
+
+
 
 
 
@@ -228,9 +268,14 @@ Kodali, Naveen, et al. "How to Train Your DRAGAN." arXiv preprint arXiv:1705.072
 |            DCGAN architecture            |
 | :--------------------------------------: |
 |                   120k                   |
-| ![dragan.30k](assets/dragan.fixed.120k.png) |
+| ![dragan.30k](assets/celeba/dragan.fixed.120k.png) |
 
 The original paper has some bugs. One of those is image x is pertured only positive-sided. I applied two-sided perturbation as the author admitted this bug on the [GitHub](https://github.com/kodalinaveen3/DRAGAN).
+
+|                   LSUN                   |
+| :--------------------------------------: |
+|                   200k                   |
+| ![dragan.200k](assets/lsun/dragan.200k.png) |
 
 
 
