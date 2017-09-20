@@ -293,16 +293,16 @@ The original paper has some bugs. One of those is image x is pertured only posit
 | ![dragan.200k](assets/lsun/dragan.200k.png) |
 
 
+<!--## Conclusion
 
-## Conclusion
-
-- BEGAN showed the best performance
+- BEGAN showed the best performance for CelebA
   - But it works terrible for LSUN dataset
   - I wonder if it works great only for face datasets and why
-- The results from WGAN and WGAN-GP were not as impressive as its beautiful theory
+- WGAN-GP showed the best performance for LSUN
+- BEGAN and WGAN-GP have the most complex network structure
 - It is difficult to rank models except BEGAN due to the lack of quantitative measure. The visual quality of generated samples from each model seemed similar.
-- Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality (except for BEGAN) 🤔🤔
-
+- Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality 🤔🤔
+  -->
 
 ## Usage
 
