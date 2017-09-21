@@ -142,3 +142,29 @@ def merge(images, size):
         return img
     else:
         raise ValueError('in merge(images,size) images parameter must have dimensions: HxW or HxWx3 or HxWx4')
+
+
+'''Sugar for gradients histograms
+# D_train_op = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1, beta2=self.beta2).\
+#     minimize(D_loss, var_list=D_vars)
+D_opt = tf.train.AdamOptimizer(learning_rate=self.D_lr, beta1=self.beta1, beta2=self.beta2)
+D_grads = tf.gradients(D_loss, D_vars)
+D_grads_and_vars = list(zip(D_grads, D_vars))
+D_train_op = D_opt.apply_gradients(grads_and_vars=D_grads_and_vars)
+
+# G_train_op = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1, beta2=self.beta2).\
+#     minimize(G_loss, var_list=G_vars, global_step=global_step)
+G_opt = tf.train.AdamOptimizer(learning_rate=self.G_lr, beta1=self.beta1, beta2=self.beta2)
+G_grads = tf.gradients(G_loss, G_vars)
+G_grads_and_vars = list(zip(G_grads, G_vars))
+G_train_op = G_opt.apply_gradients(grads_and_vars=G_grads_and_vars, global_step=global_step)
+
+
+for var in tf.trainable_variables():
+    tf.summary.histogram(var.op.name, var)
+
+for grad, var in D_grads_and_vars:
+    tf.summary.histogram('D/' + var.name + '/gradient', grad)
+for grad, var in G_grads_and_vars:
+    tf.summary.histogram('G/' + var.name + '/gradient', grad)
+'''
