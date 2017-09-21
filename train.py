@@ -17,7 +17,7 @@ def build_parser():
     models_str = ' / '.join(config.model_zoo)
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
     parser.add_argument('--name', help='default: name=model')
-    parser.add_argument('--dataset', help='CelebA / LSUN', required=True)
+    parser.add_argument('--dataset', '-D', help='CelebA / LSUN', required=True)
     parser.add_argument('--ckpt_step', default=5000, help='# of steps for saving checkpoint (default: 5000)', type=int)
     parser.add_argument('--renew', action='store_true', help='train model from scratch - \
         clean saved checkpoints and summaries', default=False)
