@@ -8,54 +8,56 @@ import ops
 from basemodel import BaseModel
 
 
-def sd_matrix(a, b):
-    '''Square distance matrix
-    a, b: [N, tensor] (N = batch size)
-    return: [N, N] (square distance matrix for every tensor pairs)
+def sd_matrix(a, b, name='square_distance_matrix'):
+    with tf.variable_scope(name):
+        '''Square distance matrix
+        a, b: [N, tensor] (N = batch size)
+        return: [N, N] (square distance matrix for every tensor pairs)
+        '''
+        batch_size = tf.shape(a)[0]
+        a = tf.reshape(a, [batch_size, 1, -1])
+        b = tf.reshape(b, [1, batch_size, -1])
+        return tf.reduce_sum((b-a)**2, axis=2)
+
+
+def plummer_kernel(a, b, kernel_dim, kernel_eps, name='plummer_kernel'):
+    # plummer kernel represents `influence`. 
+    with tf.variable_scope(name):
+        r = sd_matrix(a, b) + kernel_eps**2
+        d = kernel_dim-2
+        return r**(-d/2.)
+
+
+# Burrowed from ref code and modified to paper-style.
+def get_potentials(x, y, kernel_dim, kernel_eps):
     '''
-    batch_size = tf.shape(a)[0]
-    a = tf.reshape(a, [batch_size, 1, -1])
-    b = tf.reshape(b, [1, batch_size, -1])
-    return tf.reduce_sum((b-a)**2, axis=2)
+    This is alsmost the same `calculate_potential`, but
+        px, py = get_potentials(x, y)
+    is faster than:
+        px = calculate_potential(x, y, x)
+        py = calculate_potential(x, y, y)
+    because we calculate the cross terms only once.
+    '''
+    x_fixed = tf.stop_gradient(x)
+    y_fixed = tf.stop_gradient(y)
+    pk_xx = plummer_kernel(x_fixed, x, kernel_dim, kernel_eps)
+    pk_yx = plummer_kernel(y, x, kernel_dim, kernel_eps)
+    pk_yy = plummer_kernel(y_fixed, y, kernel_dim, kernel_eps)
+    batch_size = tf.shape(x)[0]
+    pk_xx = tf.matrix_set_diag(pk_xx, tf.ones(shape=[batch_size], dtype=pk_xx.dtype))
+    pk_yy = tf.matrix_set_diag(pk_yy, tf.ones(shape=[batch_size], dtype=pk_yy.dtype))
+    kxx = tf.reduce_mean(pk_xx, axis=0)
+    kyx = tf.reduce_mean(pk_yx, axis=0)
+    kxy = tf.reduce_mean(pk_yx, axis=1)
+    kyy = tf.reduce_mean(pk_yy, axis=0)
+    pot_x = kyx - kxx
+    pot_y = kyy - kyx
+    pot_x = tf.reshape(pot_x, [batch_size, -1])
+    pot_y = tf.reshape(pot_y, [batch_size, -1])
+    return pot_x, pot_y
 
 
-# plummer kernel represents `influence`. 
-def plummer_kernel(a, b, kernel_dim, kernel_eps):
-    r = sd_matrix(a, b) + kernel_eps**2
-    d = kernel_dim-2
-    return r**(-d/2.)
-
-
-# Burrowed from Ref code
-# def get_potentials(x, y, kernel_dim, kernel_eps):
-#     '''
-#     This is alsmost the same `calculate_potential`, but
-#         px, py = get_potentials(x, y)
-#     is faster than:
-#         px = calculate_potential(x, y, x)
-#         py = calculate_potential(x, y, y)
-#     because we calculate the cross terms only once.
-#     '''
-#     x_fixed = tf.stop_gradient(x)
-#     y_fixed = tf.stop_gradient(y)
-#     pk_xx = plummer_kernel(x_fixed, x, kernel_dim, kernel_eps)
-#     pk_yx = plummer_kernel(y, x, kernel_dim, kernel_eps)
-#     pk_yy = plummer_kernel(y_fixed, y, kernel_dim, kernel_eps)
-#     batch_size = tf.shape(x)[0]
-#     pk_xx = tf.matrix_set_diag(pk_xx, tf.ones(shape=[batch_size], dtype=pk_xx.dtype))
-#     pk_yy = tf.matrix_set_diag(pk_yy, tf.ones(shape=[batch_size], dtype=pk_yy.dtype))
-#     kxx = tf.reduce_mean(pk_xx, axis=0)
-#     kyx = tf.reduce_mean(pk_yx, axis=0)
-#     kxy = tf.reduce_mean(pk_yx, axis=1)
-#     kyy = tf.reduce_mean(pk_yy, axis=0)
-#     pot_x = kxx - kyx
-#     pot_y = kxy - kyy
-#     pot_x = tf.reshape(pot_x, [batch_size, -1])
-#     pot_y = tf.reshape(pot_y, [batch_size, -1])
-#     return pot_x, pot_y
-
-
-def calc_potential(x, y, a, kernel_dim, kernel_eps):
+def calc_potential(x, y, a, kernel_dim, kernel_eps, name='potential'):
     '''Paper notations are used in this function
     x: fake
     y: real
@@ -63,16 +65,17 @@ def calc_potential(x, y, a, kernel_dim, kernel_eps):
     return: potential of a
     '''
 
-    # Why does stop_gradient not apply to a?
-    x = tf.stop_gradient(x)
-    y = tf.stop_gradient(y)
-    kxa = tf.reduce_mean(plummer_kernel(x, a, kernel_dim, kernel_eps), axis=0)
-    kya = tf.reduce_mean(plummer_kernel(y, a, kernel_dim, kernel_eps), axis=0)
-    # kxa: influence of fake on a
-    # kya: influence of real on a
-    p = kya - kxa
-    p = tf.reshape(p, [-1, 1])
-    return p
+    with tf.variable_scope(name):
+        # Why does stop_gradient not apply to a?
+        x = tf.stop_gradient(x)
+        y = tf.stop_gradient(y)
+        kxa = tf.reduce_mean(plummer_kernel(x, a, kernel_dim, kernel_eps), axis=0)
+        kya = tf.reduce_mean(plummer_kernel(y, a, kernel_dim, kernel_eps), axis=0)
+        # kxa: influence of fake on a
+        # kya: influence of real on a
+        p = kya - kxa
+        p = tf.reshape(p, [-1, 1])
+        return p
 
 
 '''
@@ -111,8 +114,8 @@ class CoulombGAN(BaseModel):
             # get_potentials function is more efficient but it is more readable and intuitive
             # to calculate potential for each real and fake samples separately.
             # Further, there was no significant difference in efficiency as a result of the experiment.
-            P_real = calc_potential(G, X, X, kernel_dim=self.kernel_dim, kernel_eps=self.kernel_eps)
-            P_fake = calc_potential(G, X, G, kernel_dim=self.kernel_dim, kernel_eps=self.kernel_eps)
+            P_real = calc_potential(G, X, X, kernel_dim=self.kernel_dim, kernel_eps=self.kernel_eps, name='P_real')
+            P_fake = calc_potential(G, X, G, kernel_dim=self.kernel_dim, kernel_eps=self.kernel_eps, name='P_fake')
             D_loss_real = tf.losses.mean_squared_error(D_real, P_real)
             D_loss_fake = tf.losses.mean_squared_error(D_fake, P_fake)
             D_loss = D_loss_real + D_loss_fake
