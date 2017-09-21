@@ -20,6 +20,7 @@ I implemented the structure of model equal to the structure in paper and compare
    * [WGAN-GP](#wgan-gp)
    * [BEGAN](#began)
    * [DRAGAN](#dragan)
+   * [CoulombGAN](#coulombgan)
 * [Conclusion](#conclusion)
 * [Usage](#usage)
    * [Requirements](#requirements)
@@ -292,6 +293,25 @@ The original paper has some bugs. One of those is image x is pertured only posit
 |                   200k                   |
 | ![dragan.200k](assets/lsun/dragan.200k.png) |
 
+### CoulombGAN
+
+Unterthiner, Thomas, et al. "Coulomb GANs: Provably Optimal Nash Equilibria via Potential Fields." arXiv preprint arXiv:1708.08819 (2017).
+
+- CoulombGAN has also very interesting perspective - "Coulomb potential".
+- It is very interesting but I don't know whether it is GAN.
+- CoulombGAN tried to solve the diversity problem (mode collapse)
+
+
+G_lr=5e-4, D_lr=25e-5, z_dim=32.
+
+|            DCGAN architecture            |
+| :--------------------------------------: |
+|                   200k                   |
+| ![coulombgan.200k](assets/celeba/coulombgan.200k.png) |
+
+The disadvantage of this model is that it takes a very long time to train despite the simplicity of network architecture. Further, like original GAN, there is no convergence measure. I thought that the potentials of fake samples served as a convergence measure, but it did not.
+
+
 
 <!--## Conclusion
 
@@ -327,7 +347,7 @@ If you want to change the settings of each model, you must also modify code dire
 $ python train.py --help
 usage: train.py [-h] [--num_epochs NUM_EPOCHS] [--batch_size BATCH_SIZE]
                 [--num_threads NUM_THREADS] --model MODEL [--name NAME]
-                --dataset DATASET [--renew]
+                --dataset DATASET [--ckpt_step CKPT_STEP] [--renew]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -340,7 +360,10 @@ optional arguments:
   --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
                         DRAGAN
   --name NAME           default: name=model
-  --dataset DATASET     CelebA / LSUN
+  --dataset DATASET, -D DATASET
+                        CelebA / LSUN
+  --ckpt_step CKPT_STEP
+                        # of steps for saving checkpoint (default: 5000)
   --renew               train model from scratch - clean saved checkpoints and
                         summaries
 ```
@@ -363,7 +386,8 @@ optional arguments:
   --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
                         DRAGAN
   --name NAME           default: name=model
-  --dataset DATASET     CelebA / LSUN
+  --dataset DATASET, -D DATASET
+                        CelebA / LSUN
   --sample_size SAMPLE_SIZE, -N SAMPLE_SIZE
                         # of samples. It should be a square number. (default:
                         16)
