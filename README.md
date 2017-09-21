@@ -359,7 +359,7 @@ optional arguments:
   --num_threads NUM_THREADS
                         # of data read threads (default: 4)
   --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
-                        DRAGAN
+                        DRAGAN / CoulombGAN
   --name NAME           default: name=model
   --dataset DATASET, -D DATASET
                         CelebA / LSUN
@@ -385,7 +385,7 @@ usage: eval.py [-h] --model MODEL [--name NAME] --dataset DATASET
 optional arguments:
   -h, --help            show this help message and exit
   --model MODEL         DCGAN / LSGAN / WGAN / WGAN-GP / EBGAN / BEGAN /
-                        DRAGAN
+                        DRAGAN / CoulombGAN
   --name NAME           default: name=model
   --dataset DATASET, -D DATASET
                         CelebA / LSUN
