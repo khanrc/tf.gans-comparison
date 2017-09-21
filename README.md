@@ -260,10 +260,10 @@ BEGAN in the LSUN datset works terribly. Not only severe mode-collapse was obser
 
 same hyperparameters, only difference is gamma=0.4
 
-| 50k                                      | 100k                                     | 150k                                     |
-| ---------------------------------------- | ---------------------------------------- | ---------------------------------------- |
+|                   50k                    |                   100k                   |                   150k                   |
+| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
 | ![began.gm4.50k](assets/celeba/began.gm4.50k.png) | ![began.gm4.100k](assets/celeba/began.gm4.100k.png) | ![began.gm4.150k](assets/celeba/began.gm4.150k.png) |
-| 200k                                     | 250k                                     | 290k                                     |
+|                   200k                   |                   250k                   |                   290k                   |
 | ![began.gm4.200k](assets/celeba/began.gm4.200k.png) | ![began.gm4.250k](assets/celeba/began.gm4.250k.png) | ![began.gm4.290k](assets/celeba/began.gm4.290k.png) |
 
 (There is no particular reason why the last experiment is 290k instead of 300k...)
@@ -293,16 +293,16 @@ The original paper has some bugs. One of those is image x is pertured only posit
 | ![dragan.200k](assets/lsun/dragan.200k.png) |
 
 
+<!--## Conclusion
 
-## Conclusion
-
-- BEGAN showed the best performance
+- BEGAN showed the best performance for CelebA
   - But it works terrible for LSUN dataset
   - I wonder if it works great only for face datasets and why
-- The results from WGAN and WGAN-GP were not as impressive as its beautiful theory
+- WGAN-GP showed the best performance for LSUN
+- BEGAN and WGAN-GP have the most complex network structure
 - It is difficult to rank models except BEGAN due to the lack of quantitative measure. The visual quality of generated samples from each model seemed similar.
-- Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality (except for BEGAN) 🤔🤔
-
+- Conversely speaking, there have been a lot of GANs since DCGAN, but there is not a lot of significant improvement in visual quality 🤔🤔
+  -->
 
 ## Usage
 
