@@ -1,8 +1,8 @@
 # GANs comparison without cherry-picking
 
-Implementations of some theoretical generative adversarial nets: DCGAN, EBGAN, LSGAN, WGAN, WGAN-GP, BEGAN, and DRAGAN. 
+Implementations of some theoretical generative adversarial nets: DCGAN, EBGAN, LSGAN, WGAN, WGAN-GP, BEGAN, DRAGAN and CoulombGAN. 
 
-I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset without cherry-picking.
+I implemented the structure of model equal to the structure in paper and compared it on the CelebA dataset and LSUN dataset without cherry-picking.
 
 
 ## Table of Contents
@@ -45,6 +45,7 @@ I implemented the structure of model equal to the structure in paper and compare
 - EBGAN
 - BEGAN
 - DRAGAN
+- CoulombGAN
 
 The family of conditional GANs are excluded (CGAN, acGAN, and so on). 
 
