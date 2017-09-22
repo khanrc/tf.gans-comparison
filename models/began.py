@@ -14,6 +14,7 @@ class BEGAN(BaseModel):
         self.beta1 = 0.5
         self.lambd_k = 0.001
         self.nf = 128
+        self.lr_lower_bound = 2e-5
         super(BEGAN, self).__init__(name=name, training=training, D_lr=D_lr, G_lr=G_lr, 
             image_shape=image_shape, z_dim=z_dim)
 
@@ -37,7 +38,7 @@ class BEGAN(BaseModel):
                 balance = self.gamma*D_real_energy - D_fake_energy
             with tf.variable_scope('M'):
                 M = D_real_energy + tf.abs(balance)
-            
+
             D_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/D/')
             G_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name+'/G/')
 
@@ -48,7 +49,10 @@ class BEGAN(BaseModel):
             # carpedm20 decays by 0.5 per 100000 steps
             # Heumi decays by 0.95 per 2000 steps (https://github.com/Heumi/BEGAN-tensorflow/)
             D_lr = tf.train.exponential_decay(self.D_lr, global_step, self.decay_step, self.decay_rate, staircase=True)
+            D_lr = tf.maximum(D_lr, self.lr_lower_bound)
             G_lr = tf.train.exponential_decay(self.G_lr, global_step, self.decay_step, self.decay_rate, staircase=True)
+            G_lr = tf.maximum(G_lr, self.lr_lower_bound)
+
             with tf.variable_scope('D_train_op'):
                 with tf.control_dependencies(D_update_ops):
                     D_train_op = tf.train.AdamOptimizer(learning_rate=D_lr, beta1=self.beta1).\
@@ -75,11 +79,15 @@ class BEGAN(BaseModel):
                 tf.summary.scalar('balance', balance),
                 tf.summary.scalar('k', k),
                 tf.summary.scalar('D_lr', D_lr),
-                tf.summary.scalar('G_lr', G_lr),
+                tf.summary.scalar('G_lr', G_lr)
             ])
 
             # sparse-step summary
-            tf.summary.image('fake_sample', G, max_outputs=self.FAKE_MAX_OUTPUT)
+            # Generator of BEGAN does not use tanh activation func.
+            # So the generated sample (fake sample) can exceed the image bound [-1, 1].
+            fake_sample = tf.clip_by_value(G, -1., 1.)
+            tf.summary.image('fake_sample', fake_sample, max_outputs=self.FAKE_MAX_OUTPUT)
+            tf.summary.histogram('G_hist', G) # for checking out of bound
             # histogram all varibles
             # for var in tf.trainable_variables():
             #     tf.summary.histogram(var.op.name, var)
@@ -91,7 +99,7 @@ class BEGAN(BaseModel):
             self.z = z
             self.D_train_op = D_train_op
             self.G_train_op = G_train_op
-            self.fake_sample = G
+            self.fake_sample = fake_sample
             self.global_step = global_step
 
     def _encoder(self, X, reuse=False):

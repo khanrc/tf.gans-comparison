@@ -70,7 +70,7 @@ def eval(model, name, dataset, sample_shape=[4,4], load_all_ckpt=True):
             restorer.restore(sess, v)
             global_step = int(v.split('/')[-1].split('-')[-1])
             
-            fake_samples = sess.run(model.fake_sample, {model.z: z_})            
+            fake_samples = sess.run(model.fake_sample, {model.z: z_})
 
             # inverse transform: [-1, 1] => [0, 1]
             fake_samples = (fake_samples + 1.) / 2.

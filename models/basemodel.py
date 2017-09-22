@@ -34,7 +34,7 @@ class BaseModel(object):
         '''build computational graph for generation (evaluation)'''
         with tf.variable_scope(self.name):
             self.z = tf.placeholder(tf.float32, [None, self.z_dim])
-            self.fake_sample = self._generator(self.z)
+            self.fake_sample = tf.clip_by_value(self._generator(self.z), -1., 1.)
 
 
     def _build_train_graph(self, X):
