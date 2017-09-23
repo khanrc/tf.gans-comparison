@@ -234,6 +234,8 @@ batch_size=16, z_dim=64, gamma=0.5.
 | :-----------------------------------: |
 | ![began.M](assets/celeba/began.M.png) |
 
+I also tried to reduce speck-like artifacts as suggested in [Heumi/BEGAN-tensorflow](https://github.com/Heumi/BEGAN-tensorflow/), but it did not go away. 
+
 <!-- #### Speck-like artifacts phenomenon
 
 As you can see above results, the samples of BEGAN has speckle artifacts. It can be reduced by adjusting gamma.
@@ -252,26 +254,6 @@ BEGAN in the LSUN datset works terribly. Not only severe mode-collapse was obser
 | ![began.100k](assets/lsun/began.100k.png) | ![began.150k](assets/lsun/began.150k.png) |
 |                   200k                   |                   250k                   |
 | ![began.200k](assets/lsun/began.200k.png) | ![began.250k](assets/lsun/began.250k.png) |
-
-
-
-#### Image-whitening phenomenon
-
-* The images become whity and cloudy as the learning progresses. I don't know if it is right to express, but it certainly does.
-* This phenomenon has been seen in CycleGAN before. CycleGAN is based on LSGAN, but LSGAN does not have this whitening phenomenon.
-
-same hyperparameters, only difference is gamma=0.4
-
-|                   50k                    |                   100k                   |                   150k                   |
-| :--------------------------------------: | :--------------------------------------: | :--------------------------------------: |
-| ![began.gm4.50k](assets/celeba/began.gm4.50k.png) | ![began.gm4.100k](assets/celeba/began.gm4.100k.png) | ![began.gm4.150k](assets/celeba/began.gm4.150k.png) |
-|                   200k                   |                   250k                   |                   290k                   |
-| ![began.gm4.200k](assets/celeba/began.gm4.200k.png) | ![began.gm4.250k](assets/celeba/began.gm4.250k.png) | ![began.gm4.290k](assets/celeba/began.gm4.290k.png) |
-
-(There is no particular reason why the last experiment is 290k instead of 300k...)
-
-I also tried to reduce speck-like artifacts as suggested in [Heumi/BEGAN-tensorflow](https://github.com/Heumi/BEGAN-tensorflow/), but it did not go away. In spite of gamma=0.4, you can still see speck-like artifacts in the above experiments. 
-
 
 
 ### DRAGAN
