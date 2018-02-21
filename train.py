@@ -1,5 +1,4 @@
 # coding: utf-8
-
 import tensorflow as tf
 from tqdm import tqdm
 import numpy as np
@@ -7,13 +6,14 @@ import inputpipe as ip
 import glob, os, sys
 from argparse import ArgumentParser
 import utils, config
-
+import shutil
 
 def build_parser():
     parser = ArgumentParser()
     parser.add_argument('--num_epochs', default=20, help='default: 20', type=int)
     parser.add_argument('--batch_size', default=128, help='default: 128', type=int)
     parser.add_argument('--num_threads', default=4, help='# of data read threads (default: 4)', type=int)
+    parser.add_argument('--sample_dir',default='sample_dir')
     models_str = ' / '.join(config.model_zoo)
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
     parser.add_argument('--name', help='default: name=model')
@@ -36,7 +36,7 @@ def sample_z(shape):
     return np.random.normal(size=shape)
 
 
-def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_step, renew=False):
+def train(model, dataset, sample_dir,input_op, num_epochs, batch_size, n_examples, ckpt_step, renew=False):
     # n_examples = 202599 # same as util.num_examples_from_tfrecords(glob.glob('./data/celebA_tfrecords/*.tfrecord'))
     # 1 epoch = 1583 steps
     print("\n# of examples: {}".format(n_examples))
@@ -52,30 +52,34 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
     if not os.path.exists(ckpt_path):
         tf.gfile.MakeDirs(ckpt_path)
 
+    if os.path.exists(sample_dir):
+        shutil.rmtree(sample_dir)
+
+    os.makedirs(sample_dir)
+
     config = tf.ConfigProto()
-    best_gpu = utils.get_best_gpu()
-    config.gpu_options.visible_device_list = str(best_gpu) # Works same as CUDA_VISIBLE_DEVICES!
+    config.gpu_options.visible_device_list = "1" # Works same as CUDA_VISIBLE_DEVICES!
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer()) # for epochs 
+        sess.run(tf.local_variables_initializer()) # for epochs
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
 
-        # https://github.com/tensorflow/tensorflow/issues/10972        
+        # https://github.com/tensorflow/tensorflow/issues/10972
         # TensorFlow 1.2 has much bugs for text summary
         # make config_summary before define of summary_writer - bypass bug of tensorboard
-        
-        # It seems that batch_size should have been contained in the model config ... 
+
+        # It seems that batch_size should have been contained in the model config ...
         total_steps = int(np.ceil(n_examples * num_epochs / float(batch_size))) # total global step
         config_list = [
             ('num_epochs', num_epochs),
             ('total_iteration', total_steps),
-            ('batch_size', batch_size), 
+            ('batch_size', batch_size),
             ('dataset', dataset)
         ]
         model_config_list = [[k, str(w)] for k, w in sorted(model.args.items()) + config_list]
-        model_config_summary_op = tf.summary.text(model.name + '/config', tf.convert_to_tensor(model_config_list), 
+        model_config_summary_op = tf.summary.text(model.name + '/config', tf.convert_to_tensor(model_config_list),
             collections=[])
         model_config_summary = sess.run(model_config_summary_op)
 
@@ -93,6 +97,10 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
         pbar = tqdm(total=total_steps, desc='global_step')
         saver = tf.train.Saver(max_to_keep=9999) # save all checkpoints
         global_step = 0
+
+        # Use a (fixed) validation z and keep checking images over the training loop to detect mode collapse/image quality
+
+        val_z = sample_z([batch_size,model.z_dim])
 
         ckpt = tf.train.get_checkpoint_state(ckpt_path)
         if ckpt:
@@ -121,6 +129,8 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
 
                     if global_step % ckpt_step == 0:
                         saver.save(sess, ckpt_path+'/'+model.name, global_step=global_step)
+                        # Save a sample
+                        save_samples(sess=sess,val_z = val_z ,model=model,dir_name = sample_dir,global_step=global_step)
 
         except tf.errors.OutOfRangeError:
             print('\nDone -- epoch limit reached\n')
@@ -130,6 +140,16 @@ def train(model, dataset, input_op, num_epochs, batch_size, n_examples, ckpt_ste
         coord.join(threads)
         summary_writer.close()
         pbar.close()
+
+def save_samples(sess,val_z,model,dir_name,global_step):
+    """
+    Function to save samples during training
+    """
+    fake_samples = sess.run(model.fake_sample, {model.z: val_z})
+    sample_shape = [4,4]
+    merged_samples = utils.merge(fake_samples, size=sample_shape)
+    fn = "{:0>6d}.png".format(global_step)
+    scipy.misc.imsave(os.path.join(dir_name, fn), merged_samples)
 
 
 if __name__ == "__main__":
@@ -144,9 +164,9 @@ if __name__ == "__main__":
     # get information for dataset
     dataset_pattern, n_examples = config.get_dataset(FLAGS.dataset)
     # input pipeline
-    X = input_pipeline(dataset_pattern, batch_size=FLAGS.batch_size, 
+    X = input_pipeline(dataset_pattern, batch_size=FLAGS.batch_size,
         num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
 
     model = config.get_model(FLAGS.model, FLAGS.name, training=True)
-    train(model=model, dataset=FLAGS.dataset, input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size, 
+    train(model=model, dataset=FLAGS.dataset, sample_dir = FLAGS.sample_dir,input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size,
         n_examples=n_examples, ckpt_step=FLAGS.ckpt_step, renew=FLAGS.renew)

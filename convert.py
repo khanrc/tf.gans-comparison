@@ -31,7 +31,7 @@ def convert(source_dir, target_dir, crop_size, out_size, exts=[''], num_shards=1
     if not tf.gfile.Exists(source_dir):
         print('source_dir does not exists')
         return
-    
+
     if tfrecords_prefix and not tfrecords_prefix.endswith('-'):
         tfrecords_prefix += '-'
 
@@ -122,11 +122,11 @@ def export_images(db_path, out_dir, flat=False, limit=-1):
 
 if __name__ == "__main__":
     # CelebA
-    convert('./data/celebA', './data/celebA_128_tfrecords', crop_size=[128, 128], out_size=[128, 128], 
+    convert('/home/ibhat/image_completion/dcgan-completion.tensorflow/data/celebA', './data/celebA_tfrecords', crop_size=[64, 64], out_size=[64, 64],
         exts=['jpg'], num_shards=128, tfrecords_prefix='celebA')
 
     # LSUN
-    # export_images('./tf.gans-comparison/data/lsun/bedroom_val_lmdb/', 
+    # export_images('./tf.gans-comparison/data/lsun/bedroom_val_lmdb/',
     #     './tf.gans-comparison/data/lsun/bedroom_val_images/', flat=True)
-    # convert('./data/lsun/bedroom_train_images', './data/lsun/bedroom_128_tfrecords', crop_size=[128, 128], 
+    # convert('./data/lsun/bedroom_train_images', './data/lsun/bedroom_128_tfrecords', crop_size=[128, 128],
     #     out_size=[128, 128], exts=['webp'], num_shards=128, tfrecords_prefix='lsun_bedroom')

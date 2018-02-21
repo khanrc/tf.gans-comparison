@@ -35,7 +35,7 @@ def get_dataset(dataset_name):
     lsun_bedroom_128 = './data/lsun/bedroom_128_tfrecords/*.tfrecord'
 
     if dataset_name == 'celeba':
-        path = celebA_128
+        path = celebA_64
         n_examples = 202599
     elif dataset_name == 'lsun':
         path = lsun_bedroom_128
