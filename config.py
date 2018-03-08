@@ -3,7 +3,7 @@ from models import *
 
 model_zoo = ['DCGAN', 'LSGAN', 'WGAN', 'WGAN-GP', 'EBGAN', 'BEGAN', 'DRAGAN', 'CoulombGAN']
 
-def get_model(mtype, name, training):
+def get_model(mtype, name, training,image_shape=[64,64,3]):
     model = None
     if mtype == 'DCGAN':
         model = dcgan.DCGAN
@@ -26,7 +26,7 @@ def get_model(mtype, name, training):
 
     assert model, mtype + ' is work in progress'
 
-    return model(name=name, training=training)
+    return model(name=name, training=training,image_shape=image_shape)
 
 
 def get_dataset(dataset_name):

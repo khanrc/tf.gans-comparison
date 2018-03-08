@@ -7,6 +7,7 @@ import glob, os, sys
 from argparse import ArgumentParser
 import utils, config
 import shutil
+import scipy.misc
 
 def build_parser():
     parser = ArgumentParser()
@@ -18,6 +19,7 @@ def build_parser():
     parser.add_argument('--model', help=models_str, required=True) # DRAGAN, CramerGAN
     parser.add_argument('--name', help='default: name=model')
     parser.add_argument('--dataset', '-D', help='CelebA / LSUN', required=True)
+    parser.add_argument('--image_size',default=64,required=True)
     parser.add_argument('--ckpt_step', default=5000, help='# of steps for saving checkpoint (default: 5000)', type=int)
     parser.add_argument('--renew', action='store_true', help='train model from scratch - \
         clean saved checkpoints and summaries', default=False)
@@ -25,10 +27,9 @@ def build_parser():
     return parser
 
 
-def input_pipeline(glob_pattern, batch_size, num_threads, num_epochs):
+def input_pipeline(glob_pattern, batch_size, num_threads, num_epochs,image_size):
     tfrecords_list = glob.glob(glob_pattern)
-    # num_examples = utils.num_examples_from_tfrecords(tfrecords_list) # takes too long time for lsun
-    X = ip.shuffle_batch_join(tfrecords_list, batch_size=batch_size, num_threads=num_threads, num_epochs=num_epochs)
+    X = ip.shuffle_batch_join(tfrecords_list, batch_size=batch_size, num_threads=num_threads, num_epochs=num_epochs,image_size=image_size)
     return X
 
 
@@ -58,7 +59,7 @@ def train(model, dataset, sample_dir,input_op, num_epochs, batch_size, n_example
     os.makedirs(sample_dir)
 
     config = tf.ConfigProto()
-    config.gpu_options.visible_device_list = "1" # Works same as CUDA_VISIBLE_DEVICES!
+    config.gpu_options.visible_device_list = "0" # Works same as CUDA_VISIBLE_DEVICES!
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer()) # for epochs
@@ -126,11 +127,13 @@ def train(model, dataset, sample_dir,input_op, num_epochs, batch_size, n_example
 
                 if global_step % 10 == 0:
                     pbar.update(10)
+                    #Monitor losses
+                    G_loss,D_loss = sess.run([model.G_loss,model.D_loss],feed_dict={model.X:batch_X,model.z:batch_z})
+                    print('Global Step {} :: Generator loss = {} Discriminator loss = {}'.format(global_step,G_loss,D_loss))
 
                     if global_step % ckpt_step == 0:
                         saver.save(sess, ckpt_path+'/'+model.name, global_step=global_step)
-                        # Save a sample
-                        save_samples(sess=sess,val_z = val_z ,model=model,dir_name = sample_dir,global_step=global_step)
+                        save_samples(sess=sess,val_z = val_z ,model=model,dir_name = sample_dir,global_step=global_step,shape=[16,8])
 
         except tf.errors.OutOfRangeError:
             print('\nDone -- epoch limit reached\n')
@@ -141,16 +144,16 @@ def train(model, dataset, sample_dir,input_op, num_epochs, batch_size, n_example
         summary_writer.close()
         pbar.close()
 
-def save_samples(sess,val_z,model,dir_name,global_step):
+def save_samples(sess,val_z,model,dir_name,global_step,shape):
     """
     Function to save samples during training
+
     """
     fake_samples = sess.run(model.fake_sample, {model.z: val_z})
-    sample_shape = [4,4]
-    merged_samples = utils.merge(fake_samples, size=sample_shape)
+    fake_samples = (fake_samples + 1.) / 2.
+    merged_samples = utils.merge(fake_samples, size=shape)
     fn = "{:0>6d}.png".format(global_step)
     scipy.misc.imsave(os.path.join(dir_name, fn), merged_samples)
-
 
 if __name__ == "__main__":
     parser = build_parser()
@@ -165,8 +168,8 @@ if __name__ == "__main__":
     dataset_pattern, n_examples = config.get_dataset(FLAGS.dataset)
     # input pipeline
     X = input_pipeline(dataset_pattern, batch_size=FLAGS.batch_size,
-        num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs)
-
-    model = config.get_model(FLAGS.model, FLAGS.name, training=True)
+        num_threads=FLAGS.num_threads, num_epochs=FLAGS.num_epochs,image_size = int(FLAGS.image_size))
+    image_shape = [int(FLAGS.image_size),int(FLAGS.image_size),3]
+    model = config.get_model(FLAGS.model, FLAGS.name, training=True,image_shape=image_shape)
     train(model=model, dataset=FLAGS.dataset, sample_dir = FLAGS.sample_dir,input_op=X, num_epochs=FLAGS.num_epochs, batch_size=FLAGS.batch_size,
         n_examples=n_examples, ckpt_step=FLAGS.ckpt_step, renew=FLAGS.renew)

@@ -4,7 +4,7 @@ slim = tf.contrib.slim
 from utils import expected_shape
 import ops
 from basemodel import BaseModel
-
+import math
 '''Original hyperparams:
 optimizer - SGD
 init - stddev 0.02
@@ -21,7 +21,6 @@ class DCGAN(BaseModel):
             X = tf.placeholder(tf.float32, [None] + self.shape)
             z = tf.placeholder(tf.float32, [None, self.z_dim])
             global_step = tf.Variable(0, name='global_step', trainable=False)
-
             G = self._generator(z)
             D_real_prob, D_real_logits = self._discriminator(X)
             D_fake_prob, D_fake_logits = self._discriminator(G, reuse=True)
@@ -65,23 +64,25 @@ class DCGAN(BaseModel):
             self.z = z
             self.D_train_op = D_train_op
             self.G_train_op = G_train_op
+            self.G_loss = G_loss
+            self.D_loss = D_loss
             self.fake_sample = G
             self.global_step = global_step
 
     def _discriminator(self, X, reuse=False):
         with tf.variable_scope('D', reuse=reuse):
             net = X
-
-            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=2, padding='SAME', activation_fn=ops.lrelu,
+            width = X.shape[0]
+            df_dim = 64
+            stride = 2
+            with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=stride, padding='SAME', activation_fn=ops.lrelu,
                 normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
-                net = slim.conv2d(net, 64, normalizer_fn=None)
-                expected_shape(net, [32, 32, 64])
-                net = slim.conv2d(net, 128)
-                expected_shape(net, [16, 16, 128])
-                net = slim.conv2d(net, 256)
-                expected_shape(net, [8, 8, 256])
-                net = slim.conv2d(net, 512)
-                expected_shape(net, [4, 4, 512])
+                while width>0:
+                    multiplier = X.shape[0]/width
+                    net = slim.conv2d(net, df_dim*multiplier, normalizer_fn=None)
+                    output_dim = math.ceil(width/stride) # Since padding='SAME', refer : https://www.tensorflow.org/api_guides/python/nn#Convolution -- Ishaan
+                    expected_shape(net, [output_dim, output_dim, df_dim*multiplier])
+                    width = width//2 #Integer division
 
             net = slim.flatten(net)
             logits = slim.fully_connected(net, 1, activation_fn=None)
@@ -94,16 +95,18 @@ class DCGAN(BaseModel):
             net = z
             net = slim.fully_connected(net, 4*4*1024, activation_fn=tf.nn.relu)
             net = tf.reshape(net, [-1, 4, 4, 1024])
-
-            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=2, padding='SAME',
+            filter_size = 512
+            input_size = 4
+            stride = 2
+            with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=stride, padding='SAME',
                 activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
-                net = slim.conv2d_transpose(net, 512)
-                expected_shape(net, [8, 8, 512])
-                net = slim.conv2d_transpose(net, 256)
-                expected_shape(net, [16, 16, 256])
-                net = slim.conv2d_transpose(net, 128)
-                expected_shape(net, [32, 32, 128])
+                while input_size < (self.shape[0]//stride):
+                    net = slim.conv2d_transpose(net, filter_size)
+                    expected_shape(net, [input_size*stride, input_size*stride, filter_size])
+                    filter_size = filter_size//2
+                    input_size = input_size*stride
+
                 net = slim.conv2d_transpose(net, 3, activation_fn=tf.nn.tanh, normalizer_fn=None)
-                expected_shape(net, [64, 64, 3])
+                expected_shape(net, [self.shape[0], self.shape[1], 3])
 
                 return net
