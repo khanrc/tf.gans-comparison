@@ -12,7 +12,7 @@ slim = tf.contrib.slim
 def build_parser():
     parser = ArgumentParser()
     models_str = ' / '.join(config.model_zoo)
-    parser.add_argument('--model', help=models_str, required=True) 
+    parser.add_argument('--model', help=models_str, required=True)
     parser.add_argument('--name', help='default: name=model')
     parser.add_argument('--dataset', '-D', help='CelebA / LSUN', required=True)
     parser.add_argument('--sample_size', '-N', help='# of samples. It should be a square number. (default: 16)',
@@ -27,8 +27,8 @@ def sample_z(shape):
 
 def get_all_checkpoints(ckpt_dir, force=False):
     '''
-    When the learning is interrupted and resumed, all checkpoints can not be fetched with get_checkpoint_state 
-    (The checkpoint state is rewritten from the point of resume). 
+    When the learning is interrupted and resumed, all checkpoints can not be fetched with get_checkpoint_state
+    (The checkpoint state is rewritten from the point of resume).
     This function fetch all checkpoints forcely when arguments force=True.
     '''
 
@@ -41,14 +41,17 @@ def get_all_checkpoints(ckpt_dir, force=False):
         ckpts = map(lambda x: os.path.join(ckpt_dir, x), ckpts) # fn => path
     else:
         ckpts = tf.train.get_checkpoint_state(ckpt_dir).all_model_checkpoint_paths
-    
+
     return ckpts
 
 
-def eval(model, name, dataset, sample_shape=[4,4], load_all_ckpt=True):
+def eval(model, name, sample_dir,dataset, sample_shape=[4,4], load_all_ckpt=True):
     if name == None:
         name = model.name
-    dir_name = os.path.join('eval', dataset, name)
+    if sample_dir = None:
+        dir_name = os.path.join('eval', dataset, name)
+    else:
+        dir_name = os.path.join(sample_dir,dataset,name)
     if tf.gfile.Exists(dir_name):
         tf.gfile.DeleteRecursively(dir_name)
     tf.gfile.MakeDirs(dir_name)
@@ -69,7 +72,7 @@ def eval(model, name, dataset, sample_shape=[4,4], load_all_ckpt=True):
             print("Evaluating {} ...".format(v))
             restorer.restore(sess, v)
             global_step = int(v.split('/')[-1].split('-')[-1])
-            
+
             fake_samples = sess.run(model.fake_sample, {model.z: z_})
 
             # inverse transform: [-1, 1] => [0, 1]
