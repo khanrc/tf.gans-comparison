@@ -72,17 +72,21 @@ class DCGAN(BaseModel):
     def _discriminator(self, X, reuse=False):
         with tf.variable_scope('D', reuse=reuse):
             net = X
-            width = X.shape[0]
-            df_dim = 64
+            width = self.shape[0]
+            filter_num = 64
             stride = 2
+            num_conv_layers = 4
             with slim.arg_scope([slim.conv2d], kernel_size=[5,5], stride=stride, padding='SAME', activation_fn=ops.lrelu,
                 normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
-                while width>0:
-                    multiplier = X.shape[0]/width
-                    net = slim.conv2d(net, df_dim*multiplier, normalizer_fn=None)
+                for layer_num in range(1,num_conv_layers + 1):
+                    if layer_num == 1: # No batch norm for the first convolution
+                        net = slim.conv2d(net, filter_num, normalizer_fn=None)
+                    else:
+                        net = slim.conv2d(net, filter_num)
                     output_dim = math.ceil(width/stride) # Since padding='SAME', refer : https://www.tensorflow.org/api_guides/python/nn#Convolution -- Ishaan
-                    expected_shape(net, [output_dim, output_dim, df_dim*multiplier])
-                    width = width//2 #Integer division
+                    expected_shape(net, [output_dim, output_dim, filter_num])
+                    width = width // 2
+                    filter_num = filter_num*2
 
             net = slim.flatten(net)
             logits = slim.fully_connected(net, 1, activation_fn=None)
@@ -95,15 +99,15 @@ class DCGAN(BaseModel):
             net = z
             net = slim.fully_connected(net, 4*4*1024, activation_fn=tf.nn.relu)
             net = tf.reshape(net, [-1, 4, 4, 1024])
-            filter_size = 512
+            filter_num = 512
             input_size = 4
             stride = 2
             with slim.arg_scope([slim.conv2d_transpose], kernel_size=[5,5], stride=stride, padding='SAME',
                 activation_fn=tf.nn.relu, normalizer_fn=slim.batch_norm, normalizer_params=self.bn_params):
                 while input_size < (self.shape[0]//stride):
-                    net = slim.conv2d_transpose(net, filter_size)
-                    expected_shape(net, [input_size*stride, input_size*stride, filter_size])
-                    filter_size = filter_size//2
+                    net = slim.conv2d_transpose(net, filter_num)
+                    expected_shape(net, [input_size*stride, input_size*stride, filter_num])
+                    filter_num = filter_num//2
                     input_size = input_size*stride
 
                 net = slim.conv2d_transpose(net, 3, activation_fn=tf.nn.tanh, normalizer_fn=None)
